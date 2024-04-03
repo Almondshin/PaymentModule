@@ -85,7 +85,7 @@ public class EncryptDataService implements EncryptUseCase {
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-            return cipher.doFinal(Base64.getDecoder().decode(clientDataContainer.makeEncryptMapData(clientDataContainer)));
+            return cipher.doFinal(Base64.getDecoder().decode(clientDataContainer.clientEncryptData()));
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }

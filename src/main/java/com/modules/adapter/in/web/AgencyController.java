@@ -1,13 +1,12 @@
 package com.modules.adapter.in.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.adapter.in.models.ClientDataContainer;
-import com.modules.application.enums.EnumAgency;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.port.in.AgencyUseCase;
 import com.modules.application.port.in.EncryptUseCase;
 import com.modules.application.port.in.NotiUseCase;
+import com.modules.application.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,41 +47,31 @@ public class AgencyController {
 
     @PostMapping("/getSiteStatus")
     public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataContainer clientDataContainer) {
-        ObjectMapper objectMapper = new ObjectMapper();
         String keyString = clientDataContainer.keyString();
-        Map<String, String> verifyMapData = clientDataContainer.makeVerifyMapData(clientDataContainer);
         Map<String, String> keyIv = encryptUseCase.getKeyIv(keyString);
         byte[] plainBytes = encryptUseCase.decryptData(clientDataContainer, keyIv);
         String originalMessage = new String(plainBytes);
-        ClientDataContainer decryptInfo = null;
-        try {
-            decryptInfo = objectMapper.readValue(originalMessage, ClientDataContainer.class);
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to parse JSON", e);
-        }
 
-
-        Optional<ClientDataContainer> info = agencyUseCase.getAgencyInfo(new ClientDataContainer(clientDataContainer, Objects.requireNonNull(decryptInfo)));
+        Optional<ClientDataContainer> info = agencyUseCase.getAgencyInfo(clientDataContainer);
         Map<String, String> encryptMapData = new HashMap<>();
 
         if (info.isPresent()) {
             ClientDataContainer clientInfo = info.get();
-            encryptMapData = clientInfo.makeEncryptMapData(clientInfo);
+            encryptMapData = clientInfo.makeEncryptMapData();
         }
-
 
         // KEY + Message => Hash 생성
         // Hash Data (VerifyInfo) => Server
         // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
         // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
         // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
+        String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
 
-//        encryptUseCase.hmacSHA256(,);
+        boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(calculatedHmac);
+        boolean isVerifiedMsgType = clientDataContainer.verifyReceivedMessageType("status");
 
-        boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(keyString, clientDataContainer);
-        boolean isVerifiedMsgType = verifyReceivedMessageType("status", verifyMapData);
 
-        String encryptStringData = encryptUseCase.mapToJSONString(encryptMapData);
+        String encryptStringData = Utils.mapToJSONString(encryptMapData);
 
         Map<String, String> responseMessage = new HashMap<>();
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
@@ -98,23 +87,11 @@ public class AgencyController {
 
     @PostMapping("/regSiteInfo")
     public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataContainer clientDataContainer) {
-        ObjectMapper objectMapper = new ObjectMapper();
         String keyString = clientDataContainer.keyString();
-        Map<String, String> verifyMapData = clientDataContainer.makeVerifyMapData(clientDataContainer);
         Map<String, String> keyIv = encryptUseCase.getKeyIv(keyString);
         byte[] plainBytes = encryptUseCase.decryptData(clientDataContainer, keyIv);
         String originalMessage = new String(plainBytes);
-        ClientDataContainer decryptInfo = null;
-        String registerMessage = null;
-
-        Map<String, String> registerMap = clientDataContainer.makeRegisterMapData(clientDataContainer);
-
-        try {
-            decryptInfo = objectMapper.readValue(originalMessage, ClientDataContainer.class);
-            registerMessage = objectMapper.writeValueAsString(registerMap);
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to parse JSON", e);
-        }
+        ClientDataContainer decryptInfo = Utils.jsonStringToObject(originalMessage, ClientDataContainer.class);
 
         Map<String, String> responseMessage = new HashMap<>();
         ResponseEntity<?> validateResponse = validateRequiredValues(Objects.requireNonNull(decryptInfo), responseMessage);
@@ -122,8 +99,9 @@ public class AgencyController {
             return validateResponse;
         }
 
-        boolean isVerifiedHmac = encryptUseCase.verifyHmacSHA256(keyString, originalMessage, verifyMapData);
-        boolean isVerifiedMsgType = verifyReceivedMessageType("reg", verifyMapData);
+        String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
+        boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(calculatedHmac);
+        boolean isVerifiedMsgType = clientDataContainer.verifyReceivedMessageType("reg");
 
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
 
@@ -132,81 +110,35 @@ public class AgencyController {
 
         agencyUseCase.registerAgency(decryptInfo);
 
-        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register/email", registerMessage);
+        String notificationData = Utils.mapToJSONString(clientDataContainer.notificationData());
+
+        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register/email", notificationData);
+
 
         return ResponseEntity.ok(responseMessage);
     }
 
     @PostMapping("/cancelSiteInfo")
     public ResponseEntity<?> cancelSiteInfo(@RequestBody ClientDataContainer clientDataContainer) {
-        ObjectMapper objectMapper = new ObjectMapper();
         String keyString = clientDataContainer.keyString();
-        Map<String, String> verifyMapData = clientDataContainer.makeVerifyMapData(clientDataContainer);
         Map<String, String> keyIv = encryptUseCase.getKeyIv(keyString);
         byte[] plainBytes = encryptUseCase.decryptData(clientDataContainer, keyIv);
         String originalMessage = new String(plainBytes);
 
-        boolean isVerifiedHmac = encryptUseCase.verifyHmacSHA256(keyString, originalMessage, verifyMapData);
-        boolean isVerifiedMsgType = verifyReceivedMessageType("cancel", verifyMapData);
+        String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
+
+        boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(calculatedHmac);
+        boolean isVerifiedMsgType = clientDataContainer.verifyReceivedMessageType("cancel");
 
         Map<String, String> responseMessage = new HashMap<>();
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
 
-        Map<String, String> cancelMap = clientDataContainer.makeCancelMapData(clientDataContainer);
-        String cancelMessage = null;
-        try {
-            cancelMessage = objectMapper.writeValueAsString(cancelMap);
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to parse JSON", e);
-        }
-        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/cancel", cancelMessage);
+        String notificationData = Utils.mapToJSONString(clientDataContainer.notificationData());
+        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/cancel", notificationData);
 
         return ResponseEntity.ok(responseMessage);
-    }
-
-
-    /**
-     * 수신된 메시지 타입을 제휴사별 메세지 타입과 비교확인합니다.
-     *
-     * @param messageType   예상 메시지 타입
-     * @param verifyMapData : receivedMsgType (전달 받은 메시지 유형), keyString (키값 (제휴사 id))
-     * @return 받은 메시지 유형이 예상된 것과 일치하면 true, 그렇지 않으면 false
-     */
-    public boolean verifyReceivedMessageType(String messageType, Map<String, String> verifyMapData) {
-        try {
-            boolean isCancelType = messageType.equals("cancel");
-            boolean isRegType = messageType.equals("reg");
-            boolean isGetType = messageType.equals("status");
-
-            String key = "";
-            String value = "";
-
-            for (Map.Entry<String, String> field : verifyMapData.entrySet()) {
-                if (!Objects.equals(field.getKey(), "verifyInfo")) {
-                    key = field.getKey();
-                    value = field.getValue();
-                    break;
-                }
-            }
-
-            EnumAgency[] enumAgencies = EnumAgency.values();
-            for (EnumAgency enumAgency : enumAgencies) {
-                if (enumAgency.getCode().equals(key)) {
-                    if (isCancelType) {
-                        return enumAgency.getCancelMsg().equals(value);
-                    } else if (isRegType) {
-                        return enumAgency.getRegMsg().equals(value);
-                    } else if (isGetType) {
-                        return enumAgency.getStatusMsg().equals(value);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            return false;
-        }
-        return false;
     }
 
 
