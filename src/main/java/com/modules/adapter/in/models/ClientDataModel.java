@@ -1,7 +1,7 @@
-package com.bizconnect.adapter.in.model;
+package com.modules.adapter.in.models;
 
-import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
+import com.modules.application.exceptions.enums.EnumResultCode;
+import com.modules.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
