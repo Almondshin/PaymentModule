@@ -1,0 +1,102 @@
+buildscript {
+    dependencies {
+        classpath("gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:1.0.10")
+    }
+}
+plugins {
+    id 'java'
+    id 'war'
+    id 'org.springframework.boot' version '2.7.17'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'com.modules'
+version = '0.0.1-SNAPSHOT'
+
+//apply plugin: 'io.spring.dependency-management'
+apply plugin: "com.ewerk.gradle.plugins.querydsl"
+
+bootWar {
+    enabled = false
+    archiveClassifier = ''
+}
+
+war {
+    enabled = true
+    archiveClassifier = ''
+//    archiveFileName = "eziok_admin"
+}
+
+java {
+    sourceCompatibility = '11'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation fileTree(dir: 'lib', includes: ['*.jar'])
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.apache.commons:commons-dbcp2:2.7.0'
+    implementation group: 'org.jooq', name: 'jooq', version: '3.14.15'
+    implementation 'org.jooq:jooq-meta:3.14.15'
+    implementation 'org.jooq:jooq-codegen:3.14.15'
+
+    // jpa query logging
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.1'
+
+
+    // QueryDSL
+    implementation "com.querydsl:querydsl-jpa"
+    implementation "com.querydsl:querydsl-apt"
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+//    annotationProcessor 'org.projectlombok:lombok'
+
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+//    providedRuntime 'ch.qos.logback:logback-core:1.4.12'
+//    providedRuntime 'ch.qos.logback:logback-classic:1.4.12'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+
+
+
+
+//querydsl 빌드 옵션 (선택)
+def querydslDir = 'src/main/generated'
+//def querydslDir = "$buildDir/generated/querydsl"
+querydsl {
+    library = "com.querydsl:querydsl-apt"
+    jpa = true
+    querydslSourcesDir = querydslDir
+}
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', querydslDir]
+        }
+    }
+}
+compileQuerydsl{
+    options.annotationProcessorPath = configurations.querydsl
+}
+configurations {
+    querydsl.extendsFrom compileClasspath
+}

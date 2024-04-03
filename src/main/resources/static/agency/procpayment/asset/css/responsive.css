@@ -1,0 +1,85 @@
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .container header h1 {
+        font-size: 1.5rem;
+    }
+    /*  */
+    .sub-title-wrap {
+        flex-direction: column;
+    }
+    .info-item .info-item-label {
+        min-width: 80px;
+    }
+    .info-item button {
+        width: 120px;
+        height: 40px;
+    }
+    .modal_body .product_table {
+        min-width: 500px;
+    }
+    .product_botton_text {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .table_wrapper {
+        width: 100%;
+        overflow-x: scroll;
+    }
+    /* 팝업 */
+    .popup_wrap {
+        min-width: none;
+        width: 90%;
+    }
+    .modal_text {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .modal_text h5 {
+        width: 100%;
+    }
+    .modal_text p {
+        padding: 0;
+    }
+}
+@media (max-width: 380px) {
+    html {
+        font-size: 15px;
+    }
+    .info-item {
+        /* flex-wrap: wrap; */
+    }
+    .info-item button {
+        width: 100px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    /* datepicker */
+    #ui-datepicker-div {
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 96vw;
+    }
+}
+@media (max-width: 340px) {
+    .info-item {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .info-item button {
+        width: 100%;
+    }
+    .info-item.input-content-wrap.input_address input {
+        min-width: auto;
+    }
+    .info-item.input-content-wrap.input_address button {
+        width: 100%;
+        height: 40px;
+    }
+}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>휴대폰 본인확인서비스를 이용해주셔서 감사합니다</title>
+        <script src="asset/js/jquery/jquery-3.6.4.js"></script>
+        <script src="asset/js/jquery/jquery-migrate-3.4.1.min.js"></script>
+        <!-- css -->
+        <link rel="stylesheet" href="asset/css/reset.css" />
+        <link rel="stylesheet" href="asset/font/pretendard.css" />
+        <link rel="stylesheet" href="asset/css/common.css" />
+        <link rel="stylesheet" href="asset/css/responsive.css" />
+    </head>
+    <!-- 5. 결제후 확인 -->
+    <body>
+        <section class="container">
+            <!-- page title -->
+            <header>
+                <h1>휴대폰 본인확인서비스를 이용해주셔서 감사합니다.</h1>
+                <div class="sub-title-wrap">
+                    <svg id="그룹_95" data-name="그룹 95" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="51" height="48" viewBox="0 0 51 48">
+                        <defs>
+                            <clipPath id="clip-path">
+                                <rect id="사각형_41" data-name="사각형 41" width="51" height="48" fill="none" />
+                            </clipPath>
+                        </defs>
+                        <g id="그룹_94" data-name="그룹 94" clip-path="url(#clip-path)">
+                            <path id="패스_13" data-name="패스 13" d="M43,1H14A8,8,0,0,0,6,9V35" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                            <path id="패스_14" data-name="패스 14" d="M39,10V5a4,4,0,0,1,8,0V7H39" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                            <path
+                                id="패스_15"
+                                data-name="패스 15"
+                                d="M35,47H7a6,6,0,0,1-6-6H31v2a4,4,0,0,0,8,0V36"
+                                fill="none"
+                                stroke="#fff"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                            />
+                            <line id="선_20" data-name="선 20" x1="7" transform="translate(21 14)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                            <line id="선_21" data-name="선 21" x1="11" transform="translate(14 21)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                            <line id="선_22" data-name="선 22" x1="12" transform="translate(14 29)" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                            <circle id="타원_16" data-name="타원 16" cx="9" cy="9" r="9" transform="translate(30 14)" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="2" />
+                            <line
+                                id="선_23"
+                                data-name="선 23"
+                                x2="4.636"
+                                y2="4.636"
+                                transform="translate(45.364 29.364)"
+                                fill="none"
+                                stroke="#fff"
+                                stroke-linecap="round"
+                                stroke-miterlimit="10"
+                                stroke-width="2"
+                            />
+                        </g>
+                    </svg>
+                    <div class="subtitle-box">
+                        <h2>신청하신 이용 시작일부터 서비스를 이용하실 수 있습니다.</h2>
+                        <p>결제 또는 이용 중 불편하신 사항이 있으면 언제든 고객센터로 연락해주세요.</p>
+                    </div>
+                </div>
+            </header>
+            <!-- content -->
+            <!-- 신청정보 -->
+            <article class="content-wrapper">
+                <div class="content-header">
+                    <div class="content-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+                            <g id="그룹_41" data-name="그룹 41" transform="translate(-60 -345)">
+                                <g id="그룹_35" data-name="그룹 35" transform="translate(60 345)">
+                                    <g id="그룹_31" data-name="그룹 31">
+                                        <circle id="타원_3" data-name="타원 3" cx="20" cy="20" r="20" fill="#9d88ee" />
+                                    </g>
+                                    <path id="패스_4" data-name="패스 4" d="M18.056,0,7.849,10.207,1.436,3.795,0,5.23l7.849,7.848L19.492,1.436Z" transform="translate(10.254 13.461)" fill="#fff" />
+                                </g>
+                            </g>
+                        </svg>
+                        <h3>신청 정보</h3>
+                    </div>
+                </div>
+                <div class="content-body">
+                    <div class="content-box content-grid">
+                        <div class="info-item">
+                            <p class="info-item-label">상호명</p>
+                            <p id="info_company_name" class="info-item-text">(주)드림컴퍼니</p>
+                        </div>
+                        <div class="info-item">
+                            <p class="info-item-label">사업자번호</p>
+                            <p id="info_biz_num" class="info-item-text">748-45-007911</p>
+                        </div>
+                        <div class="info-item">
+                            <p class="info-item-label">상품</p>
+                            <p id="info_product_name" class="info-item-text">김대표</p>
+                        </div>
+                        <div class="info-item">
+                            <p class="info-item-label">정기결제</p>
+                            <p id="info_autopay" class="info-item-text">김대표</p>
+                        </div>
+                        <div class="info-item">
+                            <p class="info-item-label">서비스 시작일</p>
+                            <p id="info_start_date" class="info-item-text">김대표</p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <!-- 신청정보 -->
+            <article class="content-wrapper">
+                <div class="content-body">
+                    <p>
+                        정기결제 이용 가맹점은 휴대폰본인확인 서비스를 더이상 이용하지 않을 경우<br />
+                        반드시 {드림시큐리티, 제휴사 명}에 해지 의사를 전달주시기 바랍니다.<br /><br />
+                        고객센터: 1234-5678 <br />
+                        이메일: gy@midnight.studio
+                    </p>
+                </div>
+            </article>
+            <!-- btn_row -->
+            <footer>
+                <button class="btn_purple">확인</button>
+            </footer>
+        </section>
+
+        <!-- js -->
+        <script src="asset/js/dummyData2.js"></script>
+        <script src="asset/js/setUi.js"></script>
+        <script src="asset/js/common.js"></script>
+        <script src="asset/js/config.js"></script>
+        <script src="asset/js/process.js"></script>
+        <script>
+            var contentBoxList;
+            window.onload = function () {
+                contentBoxList = document.querySelectorAll(".content-box");
+                responsiveLayout();
+                if (typeof PROCESS_FLAG !== "undefined") {
+                    thankYouInit();
+                } else {
+                    setInformation_5(page5data);
+                }
+            };
+        </script>
+        <script>
+            var params = new URLSearchParams(location.search);
+            var data = params.get("data");
+
+            var companyName, bizNumber, ceoName;
+            $.ajax({
+                type: "POST",
+                url: location.origin + "/agency/payment/api/result/decrypt",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({ data: data }),
+                success: function (response) {
+                    document.querySelector("#info_company_name").innerText = response.companyName;
+                    document.querySelector("#info_biz_num").innerText = response.bizNumber;
+                    document.querySelector("#info_product_name").innerText = response.productName;
+                    document.querySelector("#info_start_date").innerText = response.startDate;
+                    if (response.autopayYN === "Y") {
+                        document.querySelector("#info_autopay").innerText = "사용";
+                    } else {
+                        document.querySelector("#info_autopay").innerText = "미사용";
+                    }
+                    console.log(response);
+                },
+            });
+        </script>
+        <script>
+            var contentBoxList;
+            window.onload = function () {
+                contentBoxList = document.querySelectorAll(".content-box");
+                responsiveLayout();
+                if (typeof PROCESS_FLAG !== "undefined") {
+                    thankYouInit();
+                } else {
+                    setInformation_5(page5data);
+                }
+                page5.setText("companyName", "드림인증");
+                page5.setText("bizNum", "012-34-56789");
+                page5.setText("productName", "lorem ipsum");
+                page5.setText("autopay", "사용");
+                page5.setText("startDate", "2024.01.01");
+            };
+        </script>
+    </body>
+</html>
