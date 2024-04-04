@@ -1,7 +1,5 @@
 package com.modules.adapter.in.models;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.adapter.out.payment.config.hectofinancial.Constant;
 import com.modules.application.enums.EnumAgency;
 import com.modules.application.enums.EnumExtensionStatus;
@@ -63,6 +61,8 @@ public class ClientDataContainer {
 
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
 
+    private static final String NUMBERS_ONLY_PATTERN = "^[0-9]+$";
+
 
     private boolean isValidAgencyId(String agencyId) {
         return agencyId.matches(AGENCY_SITE_ID_PATTERN);
@@ -70,6 +70,10 @@ public class ClientDataContainer {
 
     private boolean isValidSiteId(String siteId) {
         return siteId.matches(AGENCY_SITE_ID_PATTERN);
+    }
+
+    private boolean isValidSalesPrice(String salesPrice) {
+        return salesPrice.matches(NUMBERS_ONLY_PATTERN);
     }
 
     private void validateAgencyIdAndSiteId(String agencyId, String siteId) {
@@ -151,4 +155,190 @@ public class ClientDataContainer {
         return null;
     }
 
+
+
+
+//    public ClientDataContainer(ClientDataContainer clientDataContainer) {
+//        validateAgencyIdAndSiteId(clientDataContainer.agencyId, clientDataContainer.siteId);
+//        this.agencyId = clientDataContainer.agencyId;
+//        this.siteId = clientDataContainer.siteId;
+//    }
+
+//    public ClientDataContainer(ClientDataContainer clientDataContainer) {
+//        validateAgencyIdAndSiteId(agencyId, siteId);
+//        this.siteId = clientDataContainer.siteId;
+//        this.agencyId = clientDataContainer.agencyId;
+//        this.rateSel = clientDataContainer.rateSel;
+//        this.startDate = clientDataContainer.startDate;
+//    }
+
+
+//    public Map<String, String> makeClientInfoMap(ClientDataContainer clientDataContainer) {
+//        Map<String, String> clientInfoMap = new HashMap<>();
+//        clientInfoMap.put("companyName", clientDataContainer.companyName);
+//        clientInfoMap.put("bizNumber", clientDataContainer.bizNumber);
+//        clientInfoMap.put("ceoName", clientDataContainer.ceoName);
+//        return clientInfoMap;
+//    }
+
+
+//    public Map<String, String> checkedExtensionStatus(ClientDataContainer clientDataContainer) {
+//        if (clientDataContainer.extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+//            return createAgencySiteIdMap(clientDataContainer.agencyId, clientDataContainer.siteId);
+//        }
+//        return Collections.emptyMap();
+//    }
+
+//    public String concatenateSiteId(ClientDataContainer clientDataContainer) {
+//        validateAgencyIdAndSiteId(clientDataContainer.agencyId, clientDataContainer.siteId);
+//        return clientDataContainer.agencyId + "-" + clientDataContainer.siteId;
+//    }
+
+//    public String getAgencyStatus(ClientDataContainer searchedClient) {
+//        return searchedClient.siteStatus;
+//    }
+
+//    public String getAgencyScheduledRateSel(ClientDataContainer searchedClient) {
+//        return searchedClient.scheduledRateSel;
+//    }
+
+//    public String getClientMethod(ClientDataContainer receivedClient) {
+//        String method = receivedClient.method;
+//        if (!method.equals("card") && !method.equals("vbank")) {
+//            throw new IllegalArgumentException("Invalid method");
+//        }
+//        return receivedClient.method;
+//    }
+
+
+
+
+
+    /* 표준 결제창 정보 세팅 관련 */
+    public String agencyIdForRetrieve() {
+        validateAgencyIdAndSiteId(agencyId, siteId);
+        return this.agencyId;
+    }
+
+    public String decideRateSel(ClientDataContainer searchedClient) {
+        String searchedRateSel = searchedClient.rateSel;
+        if (searchedRateSel != null && !searchedRateSel.isEmpty()) {
+            return searchedRateSel;
+        }
+        String receivedRateSel = this.rateSel;
+        if (receivedRateSel != null && !receivedRateSel.isEmpty()) {
+            return receivedRateSel;
+        }
+        return null;
+    }
+
+    public String decideStartDate(ClientDataContainer searchedClient) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        EnumExtensionStatus extensionStatus = Arrays.stream(EnumExtensionStatus.values())
+                .filter(e -> this.extensionStatus.equals(e.getCode()))
+                .findFirst()
+                .orElse(null);
+
+        switch (Objects.requireNonNull(extensionStatus)) {
+            case DEFAULT: {
+                if (this.startDate != null) {
+                    return sdf.format(this.startDate);
+                } else if (searchedClient.startDate != null) {
+                    return sdf.format(searchedClient.startDate);
+                } else {
+                    return null;
+                }
+            }
+            case EXTENDABLE: {
+                Date endDate = searchedClient.endDate;
+                Calendar nextEndDate = Calendar.getInstance();
+                nextEndDate.setTime(endDate);
+                nextEndDate.add(Calendar.DATE, 1);
+                return sdf.format(nextEndDate.getTime());
+            }
+            default: {
+                throw new NoExtensionException(EnumResultCode.NoExtension, searchedClient.siteId);
+            }
+        }
+    }
+
+    public EnumSiteStatus checkedSiteStatus() {
+        return Arrays.stream(EnumSiteStatus.values())
+                .filter(e -> this.siteStatus.equals(e.getCode()))
+                .findFirst()
+                .orElse(null);
+    }
+
+
+    public Map<String, String> checkedExtendable() {
+        EnumExtensionStatus status = Arrays.stream(EnumExtensionStatus.values())
+                .filter(e -> this.extensionStatus.equals(e.getCode()))
+                .findFirst()
+                .orElse(null);
+
+        if (status != null && status.getCode().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+            Map<String, String> resultMap = new HashMap<>();
+            resultMap.put("agencyId", this.agencyId);
+            resultMap.put("siteId", this.siteId);
+            return resultMap;
+        }
+
+        return null;
+    }
+
+    public Map<String, String> makeCompanyInfo() {
+        Map<String, String> companyMap = new HashMap<>();
+        companyMap.put("companyName", this.companyName);
+        companyMap.put("bizNumber", this.bizNumber);
+        companyMap.put("ceoName", this.ceoName);
+        return companyMap;
+    }
+
+
+    /* PG사로 결제 정보 세팅 관련 */
+    public String generateMerchantId(Constant constant) {
+        String merchantId;
+        if (this.method.equals("card") && this.rateSel.toLowerCase().contains("autopay")) {
+            merchantId = constant.PG_MID_AUTO;
+        } else if (this.method.equals("card")) {
+            merchantId = constant.PG_MID_CARD;
+        } else {
+            merchantId = constant.PG_MID;
+        }
+        return merchantId;
+    }
+
+    public String fetchPaymentMethod() {
+        return this.method;
+    }
+
+    public String fetchPaymentPrice( ) {
+        if (!isValidSalesPrice(this.salesPrice)) {
+            throw new IllegalArgumentException("Invalid sales price");
+        }
+        return this.salesPrice;
+    }
+
+    /*정기 결제 관련*/
+    public boolean isActiveAndExtendableSiteAndScheduledRateSel() {
+        return this.siteStatus.equals(EnumSiteStatus.ACTIVE.getCode())
+                && this.extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())
+                && this.scheduledRateSel != null
+                && this.scheduledRateSel.toLowerCase().contains("auto");
+    }
+
+    public boolean isScheduledPaymentEnabled(){
+        return (this.scheduledRateSel != null && !this.scheduledRateSel.isEmpty());
+    }
+
+    public String rateSelForRetrieve(String type){
+        if (type.equals("scheduled")) {
+            return this.scheduledRateSel;
+        }
+        return this.rateSel;
+    }
+
+    public boolean isCheckedAgencyScheduledRateAutoPay() {
+        return this.scheduledRateSel != null && this.scheduledRateSel.toLowerCase().contains("autopay");
+    }
 }

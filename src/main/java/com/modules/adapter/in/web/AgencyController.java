@@ -1,6 +1,5 @@
 package com.modules.adapter.in.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.adapter.in.models.ClientDataContainer;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.port.in.AgencyUseCase;
@@ -59,19 +58,11 @@ public class AgencyController {
             ClientDataContainer clientInfo = info.get();
             encryptMapData = clientInfo.makeEncryptMapData();
         }
-
-        // KEY + Message => Hash 생성
-        // Hash Data (VerifyInfo) => Server
-        // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
-        // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
-        // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
+        String encryptStringData = Utils.mapToJSONString(encryptMapData);
         String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
 
         boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(calculatedHmac);
         boolean isVerifiedMsgType = clientDataContainer.verifyReceivedMessageType("status");
-
-
-        String encryptStringData = Utils.mapToJSONString(encryptMapData);
 
         Map<String, String> responseMessage = new HashMap<>();
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
@@ -100,6 +91,7 @@ public class AgencyController {
         }
 
         String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
+
         boolean isVerifiedHmac = clientDataContainer.verifyHmacSHA256(calculatedHmac);
         boolean isVerifiedMsgType = clientDataContainer.verifyReceivedMessageType("reg");
 
@@ -111,9 +103,7 @@ public class AgencyController {
         agencyUseCase.registerAgency(decryptInfo);
 
         String notificationData = Utils.mapToJSONString(clientDataContainer.notificationData());
-
         notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register/email", notificationData);
-
 
         return ResponseEntity.ok(responseMessage);
     }

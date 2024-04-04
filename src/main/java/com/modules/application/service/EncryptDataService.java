@@ -119,6 +119,12 @@ public class EncryptDataService implements EncryptUseCase {
      */
     @Override
     public String hmacSHA256(String target, String hmacKeyString) {
+        // KEY + Message => Hash 생성
+        // Hash Data (VerifyInfo) => Server
+        // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
+        // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
+        // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
+
         try {
             byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");

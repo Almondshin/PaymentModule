@@ -1,15 +1,19 @@
 package com.modules.adapter.in.models;
 
-import lombok.*;
+import com.modules.application.enums.EnumExtraAmountStatus;
+import com.modules.application.enums.EnumTradeTrace;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 
-@Getter
 @Setter
 @ToString
 @Builder
 @AllArgsConstructor
-public class PaymentHistoryDataModel {
+public class PaymentHistoryDataContainer {
     private String tradeNum;
     private String pgTradeNum;
     private String agencyId;
@@ -42,4 +46,19 @@ public class PaymentHistoryDataModel {
 
     private String extraAmountStatus;
     private String memo;
+
+
+    public boolean isActiveTradeTraceAndPassExtraAmountStatus() {
+        return this.trTrace.equals(EnumTradeTrace.USED.getCode())
+                && this.extraAmountStatus.equals(EnumExtraAmountStatus.PASS.getCode());
+    }
+
+    public String retrieveBillKey() {
+        return this.billKey;
+    }
+
+
+
+
+
 }
