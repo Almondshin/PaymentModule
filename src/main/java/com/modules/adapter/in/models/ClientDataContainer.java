@@ -1,6 +1,5 @@
 package com.modules.adapter.in.models;
 
-<<<<<<< HEAD:src/main/java/com/modules/adapter/in/models/ClientDataContainer.java
 import com.modules.adapter.out.payment.config.hectofinancial.Constant;
 import com.modules.application.enums.EnumAgency;
 import com.modules.application.enums.EnumExtensionStatus;
@@ -8,11 +7,6 @@ import com.modules.application.enums.EnumSiteStatus;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.modules.application.exceptions.exceptions.NoExtensionException;
-=======
-import com.modules.application.exceptions.enums.EnumResultCode;
-import com.modules.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
-import lombok.Getter;
->>>>>>> master:src/main/java/com/modules/adapter/in/models/ClientDataModel.java
 import lombok.Setter;
 import lombok.ToString;
 
