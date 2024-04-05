@@ -1,8 +1,8 @@
 package com.modules.application.service;
 
 import com.modules.adapter.in.models.ClientDataContainer;
-import com.modules.adapter.in.models.PaymentDataModel;
-import com.modules.adapter.in.models.PaymentHistoryDataModel;
+import com.modules.adapter.in.models.PaymentDataContainer;
+import com.modules.adapter.in.models.PaymentHistoryDataContainer;
 import com.modules.adapter.out.payment.config.hectofinancial.Constant;
 import com.modules.adapter.out.payment.utils.EncryptUtil;
 import com.modules.application.domain.*;
@@ -133,7 +133,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         Optional<ClientDataContainer> info = agencyService.getAgencyInfo(new ClientDataContainer(agencyId, siteId));
 
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId, siteId).stream()
+            List<PaymentHistoryDataContainer> list = getPaymentHistoryByAgency(agencyId, siteId).stream()
                     .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
                     .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
                     .collect(Collectors.toList());
@@ -190,7 +190,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         } else {
             mchtId = constant.PG_MID;
         }
-        String hashPlain = new PaymentDataModel(
+        String hashPlain = new PaymentDataContainer(
                 mchtId,
                 clientDataContainer.getMethod(),
                 tradeNum,
@@ -240,7 +240,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId, String siteId) {
+    public List<PaymentHistoryDataContainer> getPaymentHistoryByAgency(String agencyId, String siteId) {
         List<PaymentHistory> paymentHistories = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId));
         return paymentHistories.stream()
                 .map(this::convertClient)
@@ -248,7 +248,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public PaymentHistoryDataModel getPaymentHistoryByTradeNum(String pgTradeNum) {
+    public PaymentHistoryDataContainer getPaymentHistoryByTradeNum(String pgTradeNum) {
         Optional<PaymentHistory> optPaymentHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(pgTradeNum);
         if (optPaymentHistory.isPresent()) {
             PaymentHistory paymentHistory = optPaymentHistory.get();
@@ -271,10 +271,10 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public Map<String, Integer> getExcessAmount(List<PaymentHistoryDataModel> list) {
+    public Map<String, Integer> getExcessAmount(List<PaymentHistoryDataContainer> list) {
         SimpleDateFormat convertFormat = new SimpleDateFormat("yyyyMMdd");
 
-        List<PaymentHistoryDataModel> checkedList = list.stream()
+        List<PaymentHistoryDataContainer> checkedList = list.stream()
                 .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
                 .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
                 .collect(Collectors.toList());
@@ -283,7 +283,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             return new HashMap<>();
         }
 
-        PaymentHistoryDataModel overPaymentTarget = checkedList.get(1);
+        PaymentHistoryDataContainer overPaymentTarget = checkedList.get(1);
         String agencyId = overPaymentTarget.getAgencyId();
         String billingBase = loadEncryptDataPort.getAgencyInfoKey(agencyId)
                 .map(AgencyInfoKey::getBillingBase)
@@ -525,8 +525,8 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
 
     //TODO
     // Mapper 클래스로 뺄 필요가 있는지 확인 (ClientSideDataModel [DTO] <-> Domain)
-    private PaymentHistoryDataModel convertClient(PaymentHistory paymentHistory) {
-        return new PaymentHistoryDataModel(
+    private PaymentHistoryDataContainer convertClient(PaymentHistory paymentHistory) {
+        return new PaymentHistoryDataContainer(
                 paymentHistory.getTradeNum(),
                 paymentHistory.getPgTradeNum(),
                 paymentHistory.getAgencyId(),

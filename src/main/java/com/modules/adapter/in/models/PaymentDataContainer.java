@@ -1,12 +1,11 @@
 package com.modules.adapter.in.models;
 
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @ToString
 @NoArgsConstructor
-public class PaymentDataModel {
+public class PaymentDataContainer {
     private String mchtId;
     private String method;
     private String mchtTrdNo;
@@ -26,7 +25,7 @@ public class PaymentDataModel {
     private String plainClipCustCi;
     private String plainClipCustPhoneNo;
 
-    public PaymentDataModel(String mchtId, String method, String mchtTrdNo, String trdDt, String trdTm, String plainTrdAmt) {
+    public PaymentDataContainer(String mchtId, String method, String mchtTrdNo, String trdDt, String trdTm, String plainTrdAmt) {
         this.mchtId = mchtId;
         this.method = method;
         this.mchtTrdNo = mchtTrdNo;
@@ -35,7 +34,7 @@ public class PaymentDataModel {
         this.plainTrdAmt = plainTrdAmt;
     }
 
-    public PaymentDataModel(String plainTrdAmt, String plainMchtCustNm, String plainCphoneNo, String plainEmail, String plainMchtCustId, String plainTaxAmt, String plainVatAmt, String plainTaxFreeAmt, String plainSvcAmt, String plainClipCustNm, String plainClipCustCi, String plainClipCustPhoneNo, String mchtParam) {
+    public PaymentDataContainer(String plainTrdAmt, String plainMchtCustNm, String plainCphoneNo, String plainEmail, String plainMchtCustId, String plainTaxAmt, String plainVatAmt, String plainTaxFreeAmt, String plainSvcAmt, String plainClipCustNm, String plainClipCustCi, String plainClipCustPhoneNo, String mchtParam) {
         this.plainTrdAmt = plainTrdAmt;
         this.plainMchtCustNm = plainMchtCustNm;
         this.plainCphoneNo = plainCphoneNo;

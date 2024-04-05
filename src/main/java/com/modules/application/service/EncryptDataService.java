@@ -85,7 +85,7 @@ public class EncryptDataService implements EncryptUseCase {
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-            return cipher.doFinal(Base64.getDecoder().decode(clientDataContainer.makeEncryptMapData(clientDataContainer)));
+            return cipher.doFinal(Base64.getDecoder().decode(clientDataContainer.clientEncryptData()));
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
@@ -119,6 +119,12 @@ public class EncryptDataService implements EncryptUseCase {
      */
     @Override
     public String hmacSHA256(String target, String hmacKeyString) {
+        // KEY + Message => Hash 생성
+        // Hash Data (VerifyInfo) => Server
+        // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
+        // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
+        // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
+
         try {
             byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
             Mac sha256_HMAC = Mac.getInstance("HmacSHA256");

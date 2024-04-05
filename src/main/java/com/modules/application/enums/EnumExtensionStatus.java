@@ -8,7 +8,6 @@ public enum EnumExtensionStatus {
     EXTENDABLE("Y", "연장가능"),
     NOT_EXTENDABLE("N", "연장불가능");
 
-
     private final String code;
     private final String value;
 

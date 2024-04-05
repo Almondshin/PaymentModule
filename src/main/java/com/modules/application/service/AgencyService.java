@@ -81,40 +81,40 @@ public class AgencyService implements AgencyUseCase {
         }
         return productsList;
     }
-
-    private Agency convertAgency(ClientDataContainer clientDataContainer) {
-        return new Agency(clientDataContainer.getAgencyId(), clientDataContainer.getSiteId());
-    }
-
-    private Client convertClient(ClientDataContainer clientDataContainer) {
-        return new Client(
-                clientDataContainer.getSiteName(),
-                clientDataContainer.getCompanyName(),
-                clientDataContainer.getBusinessType(),
-                clientDataContainer.getBizNumber(),
-                clientDataContainer.getCeoName(),
-                clientDataContainer.getPhoneNumber(),
-                clientDataContainer.getAddress(),
-                clientDataContainer.getCompanySite(),
-                clientDataContainer.getEmail(),
-                clientDataContainer.getRateSel(),
-                clientDataContainer.getScheduledRateSel(),
-                clientDataContainer.getSiteStatus(),
-                clientDataContainer.getExtensionStatus(),
-                clientDataContainer.getStartDate(),
-                clientDataContainer.getEndDate(),
-                clientDataContainer.getServiceUseAgree()
-        );
-    }
-
-    private SettleManager convertSettleManager(ClientDataContainer clientDataContainer) {
-        return new SettleManager(
-                clientDataContainer.getSettleManagerName(),
-                clientDataContainer.getSettleManagerPhoneNumber(),
-                clientDataContainer.getSettleManagerTelNumber(),
-                clientDataContainer.getSettleManagerEmail()
-        );
-    }
+//
+//    private Agency convertAgency(ClientDataContainer clientDataContainer) {
+//        return new Agency(clientDataContainer.getAgencyId(), clientDataContainer.getSiteId());
+//    }
+//
+//    private Client convertClient(ClientDataContainer clientDataContainer) {
+//        return new Client(
+//                clientDataContainer.getSiteName(),
+//                clientDataContainer.getCompanyName(),
+//                clientDataContainer.getBusinessType(),
+//                clientDataContainer.getBizNumber(),
+//                clientDataContainer.getCeoName(),
+//                clientDataContainer.getPhoneNumber(),
+//                clientDataContainer.getAddress(),
+//                clientDataContainer.getCompanySite(),
+//                clientDataContainer.getEmail(),
+//                clientDataContainer.getRateSel(),
+//                clientDataContainer.getScheduledRateSel(),
+//                clientDataContainer.getSiteStatus(),
+//                clientDataContainer.getExtensionStatus(),
+//                clientDataContainer.getStartDate(),
+//                clientDataContainer.getEndDate(),
+//                clientDataContainer.getServiceUseAgree()
+//        );
+//    }
+//
+//    private SettleManager convertSettleManager(ClientDataContainer clientDataContainer) {
+//        return new SettleManager(
+//                clientDataContainer.getSettleManagerName(),
+//                clientDataContainer.getSettleManagerPhoneNumber(),
+//                clientDataContainer.getSettleManagerTelNumber(),
+//                clientDataContainer.getSettleManagerEmail()
+//        );
+//    }
 
 
 

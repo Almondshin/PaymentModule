@@ -4,13 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.adapter.in.models.ClientDataContainer;
-import com.modules.adapter.in.models.PaymentHistoryDataModel;
+import com.modules.adapter.in.models.PGDataContainer;
+import com.modules.adapter.in.models.PaymentHistoryDataContainer;
 import com.modules.adapter.out.payment.config.hectofinancial.Constant;
 import com.modules.adapter.out.payment.utils.EncryptUtil;
 import com.modules.adapter.out.payment.utils.HttpClientUtil;
 import com.modules.application.domain.AgencyInfoKey;
 import com.modules.application.domain.AgencyProducts;
-import com.modules.application.enums.*;
+import com.modules.application.enums.EnumAgency;
+import com.modules.application.enums.EnumExtensionStatus;
+import com.modules.application.enums.EnumSiteStatus;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.port.in.AgencyUseCase;
 import com.modules.application.port.in.NotiUseCase;
@@ -78,15 +81,17 @@ public class PaymentController {
      */
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataContainer clientDataContainer) {
-        Optional<ClientDataContainer> optClientInfo = agencyUseCase.getAgencyInfo(new ClientDataContainer(clientDataContainer));
-        List<Map<String, String>> productTypes = agencyUseCase.getProductTypes(clientDataContainer.getKeyString(clientDataContainer));
+
+        Optional<ClientDataContainer> optClientInfo = agencyUseCase.getAgencyInfo(clientDataContainer);
+
+        List<Map<String, String>> productTypes = agencyUseCase.getProductTypes(clientDataContainer.agencyIdForRetrieve());
         Map<String, Object> responseMessage = new HashMap<>();
 
         if (optClientInfo.isPresent()) {
             ClientDataContainer clientInfo = optClientInfo.get();
 
-            String rateSel = clientDataContainer.determineRateSelection(clientInfo, clientDataContainer);
-            String startDate = clientDataContainer.decideStartDate(clientInfo, clientDataContainer);
+            String rateSel = clientDataContainer.decideRateSel(clientInfo);
+            String startDate = clientDataContainer.decideStartDate(clientInfo);
 
             ResponseEntity<?> siteStatusResponse = decideSiteStatus(responseMessage, clientInfo);
             if (siteStatusResponse != null) {
@@ -96,20 +101,18 @@ public class PaymentController {
             if (siteScheduledRateSelResponse != null) {
                 return siteScheduledRateSelResponse;
             }
-
-            Map<String, String> extendableAgencyId = clientDataContainer.checkedExtensionStatus(clientInfo);
-
-            if (!extendableAgencyId.isEmpty()) {
+            Map<String, String> checkedExtensionStatus = clientInfo.checkedExtendable();
+            if (!checkedExtensionStatus.isEmpty()) {
                 Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
-                        paymentUseCase.getPaymentHistoryByAgency(extendableAgencyId.get("agencyId"), extendableAgencyId.get("siteId"))
+                        paymentUseCase.getPaymentHistoryByAgency(checkedExtensionStatus.get("agencyId"), checkedExtensionStatus.get("siteId"))
                 );
                 responseMessage.put("extensionStatus", EnumExtensionStatus.EXTENDABLE.getCode());
                 responseMessage.put("excessCount", excessMap.get("excessCount"));
                 responseMessage.put("excessAmount", excessMap.get("excessAmount"));
             }
 
-            Map<String, String> clientInfoMap = clientDataContainer.makeClientInfoMap(clientInfo);
-            responseMessage.put("clientInfo", clientInfoMap.get("companyName") + "," + clientInfoMap.get("bizNumber") + "," + clientInfoMap.get("ceoName"));
+            Map<String, String> companyInfoMap = clientDataContainer.makeCompanyInfo();
+            responseMessage.put("clientInfo", companyInfoMap.get("companyName") + "," + companyInfoMap.get("bizNumber") + "," + companyInfoMap.get("ceoName"));
             responseMessage.put("rateSel", rateSel);
             responseMessage.put("startDate", startDate);
         }
@@ -118,7 +121,6 @@ public class PaymentController {
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         responseMessage.put("profileUrl", profileSpecificUrl);
         responseMessage.put("profilePaymentUrl", profileSpecificPaymentUrl);
-        responseMessage.put("siteId", clientDataContainer.concatenateSiteId(clientDataContainer));
         responseMessage.put("listSel", productTypes);
 
         return ResponseEntity.ok(responseMessage);
@@ -133,6 +135,9 @@ public class PaymentController {
      */
     @PostMapping("/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataContainer clientDataContainer) {
+
+        //TODO
+        //
         Map<String, Object> responseMessage = new HashMap<>();
         LocalDateTime ldt = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -146,16 +151,16 @@ public class PaymentController {
         }
         String trdDt = ldt.format(dateFormatter);
         String trdTm = ldt.format(timeFormatter);
-        String merchantId = clientDataContainer.getMerchantIdBasedOnMethod(clientDataContainer, constant);
+        String merchantId = clientDataContainer.generateMerchantId(constant);
 
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         responseMessage.put("mchtId", merchantId);
-        responseMessage.put("method", clientDataContainer.getClientMethod(clientDataContainer));
+        responseMessage.put("method", clientDataContainer.fetchPaymentMethod());
         responseMessage.put("trdDt", trdDt);
         responseMessage.put("trdTm", trdTm);
         responseMessage.put("mchtTrdNo", tradeNum);
-        responseMessage.put("trdAmt", clientDataContainer.getClientSalesPrice(clientDataContainer));
+        responseMessage.put("trdAmt", clientDataContainer.fetchPaymentPrice());
         responseMessage.put("hashCipher", paymentUseCase.aes256EncryptEcb(clientDataContainer, tradeNum, trdDt, trdTm));
         responseMessage.put("encParams", paymentUseCase.encodeBase64(clientDataContainer, tradeNum));
 
@@ -192,58 +197,51 @@ public class PaymentController {
 
         String agencyId = mapData.get("agencyId");
         String siteId = mapData.get("siteId").split("-")[1];
+        String tradeNum = mapData.get("tradeNum");
 
-        Optional<PaymentHistoryDataModel> optPaymentHistory = paymentUseCase.getPaymentHistoryByAgency(agencyId, siteId)
+        Optional<PaymentHistoryDataContainer> optPaymentHistory = paymentUseCase.getPaymentHistoryByAgency(agencyId, siteId)
                 .stream()
-                .filter(e -> e.getTradeNum().equals(mapData.get("tradeNum")))
+                .filter(e -> e.isSameTradeNum(tradeNum))
                 .findFirst();
 
+
         if (optPaymentHistory.isPresent()) {
-            PaymentHistoryDataModel paymentHistoryDataModel = optPaymentHistory.get();
+            PaymentHistoryDataContainer paymentHistoryDataContainer = optPaymentHistory.get();
             Map<String, String> data = new HashMap<>();
 
-            if (paymentHistoryDataModel.getRateSel().toLowerCase().contains("autopay")) {
+            if (paymentHistoryDataContainer.isScheduledRateSel()) {
                 mchtId = constant.getPG_CANCEL_MID_AUTO();
                 params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
             }
-
-            data.put("orgTrdNo", paymentHistoryDataModel.getPgTradeNum()); // 원거래번호 : 결제시 헥토에서 발급한 거래번호
-            data.put("crcCd", "KRW"); // 통화구분 "KRW" 고정값
-            data.put("cnclOrd", "001"); // 취소 회차
-            data.put("cnclAmt", paymentHistoryDataModel.getAmount()); // 취소 금액 AES 암호화
-
-            try {
-                // 취소요청일자 + 취소요청시간 + 상점아이디 + 상점주문번호 + 취소금액(평문) + 해쉬키
-                data.put("pktHash", EncryptUtil.digestSHA256(
-                        trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataModel.getAmount() + constant.LICENSE_KEY)
-                );
-                data.put("cnclAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("cnclAmt"))));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            requestData.put("params", params);
-            requestData.put("data", data);
-            String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
-
-            HttpClientUtil httpClientUtil = new HttpClientUtil();
-            String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
-            System.out.println(resData);
-
             String hashCipher = "";
-            String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataModel.getAmount() + constant.LICENSE_KEY;
 
-            /** SHA256 해쉬 처리 */
             try {
+                String pgTradeNumber = paymentHistoryDataContainer.pgTradeNumber();
+                String paymentAmount = paymentHistoryDataContainer.paymentAmount();
+                String amount = "";
+                PGDataContainer dataContainer = new PGDataContainer(pgTradeNumber, paymentAmount, hashCipher);
+                hashCipher = dataContainer.makeHashCipher(constant.LICENSE_KEY);
+                amount = dataContainer.encodeAmount(constant.AES256_KEY);
+
+                requestData.put("params", params);
+                requestData.put("data", dataContainer);
+
+                String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
+
+                HttpClientUtil httpClientUtil = new HttpClientUtil();
+                String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
+                System.out.println(resData);
+
+                String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + amount + constant.LICENSE_KEY;
                 hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+
             } catch (Exception e) {
                 logger.error("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
             } finally {
-                logger.info("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+                logger.info("[" + params.get("mchtTrdNo") + "]Cipher Text[" + hashCipher + "]");
             }
         }
     }
-
 
     /**
      * Request bill key payment.
@@ -253,139 +251,108 @@ public class PaymentController {
     @PostMapping(value = "/bill")
     public void requestBillKeyPayment(@RequestBody String requestMsg) {
         Map<String, Object> responseData = new HashMap<>();
-        Map<String, String> params = new HashMap<>();
-
-        String ver = "0A19";
-        String method = "CA";
-        String bizType = "B0";
-        String encCd = "23";
-        String mchtId = constant.PG_MID_AUTO;
-        String mchtTrdNo = "GYAUTO" + UUID.randomUUID().toString().replace("-", "");
         LocalDateTime now = LocalDateTime.now();
-        String trdDt = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String trdTm = now.toLocalTime().format(DateTimeFormatter.ofPattern("HHmmss"));
-
-        params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
-        params.put("ver", ver); // 버전 (고정값)
-        params.put("method", method); // 결제수단 (고정값)
-        params.put("bizType", bizType); // 업무 구분 코드 (고정값)
-        params.put("encCd", encCd);   // 암호화 구분 코드 (고정값)
-        params.put("mchtTrdNo", mchtTrdNo); // 상점 주문번호
-        params.put("trdDt", trdDt); // 주문 날짜
-        params.put("trdTm", trdTm);   // 주문 시간
 
 
         if (requestMsg.equals("BillPaymentService")) {
-            List<ClientDataContainer> agencyInfoList = agencyUseCase.selectAgencyInfo().stream()
-                    .filter(ClientDataContainer::isActiveExtendableAutoRateAgency)
+            List<ClientDataContainer> agencyInfoList = agencyUseCase.selectAgencyInfo()
+                    .stream()
+                    .filter(ClientDataContainer::isActiveAndExtendableSiteAndScheduledRateSel)
                     .collect(Collectors.toList());
 
             agencyInfoList.forEach(agencyInfo -> {
-                Map<String, String> agencyMapData = agencyInfo.makeAgencyMapData(agencyInfo);
-                Optional<ClientDataContainer> clientDataModel = agencyUseCase.getAgencyInfo(new ClientDataContainer(agencyInfo, agencyInfo));
+                Optional<ClientDataContainer> clientDataModel = agencyUseCase.getAgencyInfo(agencyInfo);
                 if (clientDataModel.isPresent()) {
                     ClientDataContainer info = clientDataModel.get();
-                    if (info.isCheckedAgencyScheduledRateAutoPay(info)) {
-                        AgencyProducts products = paymentUseCase.getAgencyProductByRateSel(info.getAgencyScheduledRateSel(info));
+                    if (info.isScheduledPaymentEnabled()) {
+                        Map<String, String> checkedExtensionStatus = info.checkedExtendable();
+                        String siteId = checkedExtensionStatus.get("siteId");
+                        String agencyId = checkedExtensionStatus.get("agencyId");
 
-                        List<PaymentHistoryDataModel> paymentHistoryList = paymentUseCase.getPaymentHistoryByAgency(agencyInfo.getAgencyId(), convertSiteId)
+                        List<PaymentHistoryDataContainer> paymentHistoryList = paymentUseCase.getPaymentHistoryByAgency(agencyId, siteId)
                                 .stream()
-                                .filter((PaymentHistoryDataModel e) -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
-                                .filter((PaymentHistoryDataModel e) -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                                .filter(PaymentHistoryDataContainer::isActiveTradeTraceAndPassExtraAmountStatus)
                                 .collect(Collectors.toList());
 
-
-                        Map<String, String> data = new HashMap<>();
-                        String billKey = paymentHistoryList.get(0).getBillKey();
-
-                        String productName = products.getName();
-
                         int excessAmount = 0;
-
-                        Map<String, String> extendableAgencyId = info.checkedExtensionStatus(info);
-
                         if (paymentHistoryList.size() > 2) {
                             Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
-                                    paymentUseCase.getPaymentHistoryByAgency(extendableAgencyId.get("agencyId"), extendableAgencyId.get("siteId"))
+                                    paymentUseCase.getPaymentHistoryByAgency(checkedExtensionStatus.get("agencyId"), checkedExtensionStatus.get("siteId"))
                             );
                             excessAmount = excessMap.get("excessAmount");
                         }
 
-                        String amount = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getPrice() + excessAmount;
+                        String amount = paymentUseCase.getAgencyProductByRateSel(info.rateSelForRetrieve("basic")).getPrice() + excessAmount;
 
-                        data.put("pmtprdNm", productName);
-                        data.put("mchtCustNm", "상점이름");
-                        data.put("mchtCustId", mchtId);
-                        data.put("billKey", billKey);
-                        data.put("instmtMon", "00"); // 할부개월
-                        data.put("crcCd", "KRW");
-                        data.put("trdAmt", amount);
+                        AgencyProducts products = paymentUseCase.getAgencyProductByRateSel(info.rateSelForRetrieve("scheduled"));
+                        String productName = products.getName();
 
-                        try {
-                            data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
-                            data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        String billKey = paymentHistoryList.get(0).retrieveBillKey();
+                        String tradeNum = paymentUseCase.makeTradeNum();
 
-                        String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
 
-                        HttpClientUtil httpClientUtil = new HttpClientUtil();
-
-                        responseData.put("params", params);
-                        responseData.put("data", data);
-                        String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
-
+                        String merchantId = constant.PG_MID_AUTO;
                         String hashCipher = "";
-                        String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY;
 
-                        /** SHA256 해쉬 처리 */
                         try {
-                            hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+                            PGDataContainer billParamsContainer = new PGDataContainer("bill_params", merchantId, tradeNum, productName, billKey, hashCipher, amount);
+                            PGDataContainer billDataContainer = new PGDataContainer("bill_data", merchantId, tradeNum, productName, billKey, hashCipher, amount);
+                            hashCipher = billParamsContainer.makeHashCipher(constant.LICENSE_KEY);
+
+                            responseData.put("params", billParamsContainer);
+                            responseData.put("data", billDataContainer);
+
+                            String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+                            HttpClientUtil httpClientUtil = new HttpClientUtil();
+
+                            String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
+
+                            paymentUseCase.insertAutoPayPaymentHistory(agencyId, siteId, paymentUseCase.getAgencyProductByRateSel(info.rateSelForRetrieve("basic")), reqData);
+
                         } catch (Exception e) {
-                            logger.error("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+                            logger.error("[" + tradeNum + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+                            throw new RuntimeException(e);
                         } finally {
-                            logger.info("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+                            logger.info("[" + tradeNum + "][SHA256 HASHING] Cipher Text[" + hashCipher + "]");
                         }
-                        paymentUseCase.insertAutoPayPaymentHistory(agencyInfo.getAgencyId(), convertSiteId, paymentUseCase.getAgencyProductByRateSel(info.getRateSel()), reqData);
                     }
                 }
 
             });
         }
-
     }
 
-
-    /* 결제대기상태가 아닌 경우, 초기 결제로 판단 제휴사 승인대기, 통신사 승인대기 상태 전달. */
 
     private ResponseEntity<?> decideSiteStatus(Map<String, Object> responseMessage, ClientDataContainer searchedClient) {
         // TRADE_PENDING : 결제 대기 상태 (통신사 심사 승인 완료 이후 결제 대기 알림 발송완료 상태)
         // PENDING : 제휴사 승인 대기 ( 관리자가 등록하기 전 상태 )
-        String status = searchedClient.getAgencyStatus(searchedClient);
+        EnumSiteStatus status = searchedClient.checkedSiteStatus();
 
-        if (status.equals(EnumSiteStatus.SUSPENDED.getCode())) {
-            responseMessage.put("resultCode", EnumResultCode.SuspendedSiteId.getCode());
-            responseMessage.put("resultMsg", EnumResultCode.SuspendedSiteId.getValue());
-            return ResponseEntity.ok(responseMessage);
+        if (status == null || status == EnumSiteStatus.TRADE_PENDING) {
+            return null;
         }
 
-        if (!status.equals(EnumSiteStatus.TRADE_PENDING.getCode())) {
-            if (status.equals(EnumSiteStatus.REJECT.getCode())) {
+        switch (status) {
+            case SUSPENDED:
+                responseMessage.put("resultCode", EnumResultCode.SuspendedSiteId.getCode());
+                responseMessage.put("resultMsg", EnumResultCode.SuspendedSiteId.getValue());
+                break;
+            case REJECT:
                 responseMessage.put("resultCode", EnumResultCode.RejectAgency.getCode());
                 responseMessage.put("resultMsg", EnumResultCode.RejectAgency.getValue());
-                return ResponseEntity.ok(responseMessage);
-            } else if (status.equals(EnumSiteStatus.PENDING.getCode())) {
+                break;
+            case PENDING:
                 responseMessage.put("resultCode", EnumResultCode.PendingApprovalStatus.getCode());
                 responseMessage.put("resultMsg", EnumResultCode.PendingApprovalStatus.getValue());
-                return ResponseEntity.ok(responseMessage);
-            }
+                break;
         }
-        return null;
+
+        return ResponseEntity.ok(responseMessage);
     }
 
+
     private ResponseEntity<?> checkedScheduledRateSel(Map<String, Object> responseMessage, ClientDataContainer searchedClient) {
-        boolean isAgencyScheduledRateAutoPay = searchedClient.isCheckedAgencyScheduledRateAutoPay(searchedClient);
+        boolean isAgencyScheduledRateAutoPay = searchedClient.isCheckedAgencyScheduledRateAutoPay();
         if (isAgencyScheduledRateAutoPay) {
             responseMessage.put("resultCode", EnumResultCode.Subscription.getCode());
             responseMessage.put("resultMsg", EnumResultCode.Subscription.getValue());

@@ -6,14 +6,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 
 public class Utils {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String mapToJSONString(Map<String, String> map) {
+    public static String mapToJSONString(Map<String, String> map) {
         try {
-            /* libs  필요 */
-            ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.writeValueAsString(map);
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             System.out.println("mapToJSONString 실패");
+            return null;
+        }
+    }
+
+    public static <T> T jsonStringToObject(String jsonString, Class<T> valueType) {
+        try {
+            return objectMapper.readValue(jsonString, valueType);
+        } catch (JsonProcessingException e) {
+            System.out.println("jsonStringToObject 실패");
             return null;
         }
     }
