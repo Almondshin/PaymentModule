@@ -1,5 +1,7 @@
 package com.modules.adapter.in.web;
 
+import com.modules.adapter.in.models.ClientDataContainer;
+import com.modules.application.domain.Client;
 import com.modules.application.port.in.EncryptUseCase;
 import com.modules.application.port.in.NotiUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +34,11 @@ public class NotiController {
 
         String plainData = encryptUseCase.mapToJSONString(responseData);
 
+        String keyString = responseData.get("agencyId");
+        Map<String, String> keyIv = encryptUseCase.getKeyIv(keyString);
+
         String msgType = "NotifyStatusSite";
-        String encryptData = encryptUseCase.encryptData(responseData.get("agencyId"), plainData);
+        String encryptData = encryptUseCase.encryptData(plainData, keyIv);
         String verifyInfo = encryptUseCase.hmacSHA256(plainData, responseData.get("agencyId"));
 
         Map<String, String> requestStatusSiteMap = new HashMap<>();
@@ -50,13 +55,11 @@ public class NotiController {
         System.out.println("requestStatusSiteData : " + requestStatusSiteData);
 
         //targetUrl : 가맹점 NotiURL 입니다.
-         notiUseCase.sendNotification(targetUrl, requestStatusSiteData);
+        notiUseCase.sendNotification(targetUrl, requestStatusSiteData);
 
         // 클라이언트에게 응답을 기대하지 않는 경우에도 "Success" 응답을 제공
         return ResponseEntity.ok("Success");
     }
-
-
 
 
 }
