@@ -1,11 +1,10 @@
 package com.modules.adapter.in.models;
 
-import lombok.Getter;
 import lombok.Setter;
 
-@Getter
+
 @Setter
-public class ProductDataModel {
+public class ProductDataContainer {
     /* 결제 상품 */
     /*
     상품코드 (Product Code) : productCode

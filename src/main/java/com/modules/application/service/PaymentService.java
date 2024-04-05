@@ -1,7 +1,7 @@
 package com.modules.application.service;
 
 import com.modules.adapter.in.models.ClientDataContainer;
-import com.modules.adapter.in.models.PaymentDataModel;
+import com.modules.adapter.in.models.PaymentDataContainer;
 import com.modules.adapter.in.models.PaymentHistoryDataContainer;
 import com.modules.adapter.out.payment.config.hectofinancial.Constant;
 import com.modules.adapter.out.payment.utils.EncryptUtil;
@@ -190,7 +190,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         } else {
             mchtId = constant.PG_MID;
         }
-        String hashPlain = new PaymentDataModel(
+        String hashPlain = new PaymentDataContainer(
                 mchtId,
                 clientDataContainer.getMethod(),
                 tradeNum,
