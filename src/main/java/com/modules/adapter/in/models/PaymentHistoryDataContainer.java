@@ -58,7 +58,21 @@ public class PaymentHistoryDataContainer {
     }
 
 
+    public boolean isSameTradeNum(String tradeNum) {
+        return this.tradeNum.equals(tradeNum);
+    }
 
+    public boolean isScheduledRateSel(){
+        return this.rateSel.toLowerCase().contains("autopay");
+    }
+
+    public String pgTradeNumber(){
+        return this.pgTradeNum;
+    }
+
+    public String paymentAmount(){
+        return this.amount;
+    }
 
 
 }

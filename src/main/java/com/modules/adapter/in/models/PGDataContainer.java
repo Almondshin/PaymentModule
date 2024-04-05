@@ -36,11 +36,11 @@ public class PGDataContainer {
     private String crcCd;
     private String trdAmt;
 
+    private String orgTrdNo;
+    private String cnclOrd;
+    private String cnclAmt;
+
     private String pktHash;
-
-    public PGDataContainer(){
-
-    }
 
     public String makeHashCipher(String licenseKey) throws Exception {
         return EncryptUtil.digestSHA256(this.trdDt + this.trdTm + this.mchtId + this.mchtTrdNo + this.trdAmt + licenseKey);
@@ -66,6 +66,10 @@ public class PGDataContainer {
         }
     }
 
+    public PGDataContainer(String pgTradeNum, String cancelAmount, String hashCipher) {
+        makeBillPGData(pgTradeNum, cancelAmount, hashCipher);
+    }
+
     private void makeBillPGParams() {
         this.version = "0A19";
         this.method = "CA";
@@ -82,6 +86,14 @@ public class PGDataContainer {
         this.crcCd = CRC_CD;
         this.pktHash = hashCipher;
         this.trdAmt = amount;
+    }
+
+    private void makeBillPGData(String pgTradeNum, String cancelAmount, String hashCipher) {
+        this.orgTrdNo = pgTradeNum;
+        this.crcCd = CRC_CD;
+        this.cnclOrd = "001";
+        this.cnclAmt = cancelAmount;
+        this.pktHash = hashCipher;
     }
 
 

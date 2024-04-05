@@ -11,12 +11,13 @@ import com.modules.adapter.out.payment.utils.EncryptUtil;
 import com.modules.adapter.out.payment.utils.HttpClientUtil;
 import com.modules.application.domain.AgencyInfoKey;
 import com.modules.application.domain.AgencyProducts;
-import com.modules.application.enums.*;
+import com.modules.application.enums.EnumAgency;
+import com.modules.application.enums.EnumExtensionStatus;
+import com.modules.application.enums.EnumSiteStatus;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.port.in.AgencyUseCase;
 import com.modules.application.port.in.NotiUseCase;
 import com.modules.application.port.in.PaymentUseCase;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,54 +197,48 @@ public class PaymentController {
 
         String agencyId = mapData.get("agencyId");
         String siteId = mapData.get("siteId").split("-")[1];
+        String tradeNum = mapData.get("tradeNum");
 
         Optional<PaymentHistoryDataContainer> optPaymentHistory = paymentUseCase.getPaymentHistoryByAgency(agencyId, siteId)
                 .stream()
-                .filter(e -> e.getTradeNum().equals(mapData.get("tradeNum")))
+                .filter(e -> e.isSameTradeNum(tradeNum))
                 .findFirst();
+
 
         if (optPaymentHistory.isPresent()) {
             PaymentHistoryDataContainer paymentHistoryDataContainer = optPaymentHistory.get();
             Map<String, String> data = new HashMap<>();
 
-            if (paymentHistoryDataContainer.getRateSel().toLowerCase().contains("autopay")) {
+            if (paymentHistoryDataContainer.isScheduledRateSel()) {
                 mchtId = constant.getPG_CANCEL_MID_AUTO();
                 params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
             }
-
-            data.put("orgTrdNo", paymentHistoryDataContainer.getPgTradeNum()); // 원거래번호 : 결제시 헥토에서 발급한 거래번호
-            data.put("crcCd", "KRW"); // 통화구분 "KRW" 고정값
-            data.put("cnclOrd", "001"); // 취소 회차
-            data.put("cnclAmt", paymentHistoryDataContainer.getAmount()); // 취소 금액 AES 암호화
-
-            try {
-                // 취소요청일자 + 취소요청시간 + 상점아이디 + 상점주문번호 + 취소금액(평문) + 해쉬키
-                data.put("pktHash", EncryptUtil.digestSHA256(
-                        trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataContainer.getAmount() + constant.LICENSE_KEY)
-                );
-                data.put("cnclAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("cnclAmt"))));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            requestData.put("params", params);
-            requestData.put("data", data);
-            String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
-
-            HttpClientUtil httpClientUtil = new HttpClientUtil();
-            String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
-            System.out.println(resData);
-
             String hashCipher = "";
-            String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataContainer.getAmount() + constant.LICENSE_KEY;
 
-            /** SHA256 해쉬 처리 */
             try {
+                String pgTradeNumber = paymentHistoryDataContainer.pgTradeNumber();
+                String paymentAmount = paymentHistoryDataContainer.paymentAmount();
+                String amount = "";
+                PGDataContainer dataContainer = new PGDataContainer(pgTradeNumber, paymentAmount, hashCipher);
+                hashCipher = dataContainer.makeHashCipher(constant.LICENSE_KEY);
+                amount = dataContainer.encodeAmount(constant.AES256_KEY);
+
+                requestData.put("params", params);
+                requestData.put("data", dataContainer);
+
+                String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
+
+                HttpClientUtil httpClientUtil = new HttpClientUtil();
+                String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
+                System.out.println(resData);
+
+                String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + amount + constant.LICENSE_KEY;
                 hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+
             } catch (Exception e) {
                 logger.error("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
             } finally {
-                logger.info("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+                logger.info("[" + params.get("mchtTrdNo") + "]Cipher Text[" + hashCipher + "]");
             }
         }
     }
