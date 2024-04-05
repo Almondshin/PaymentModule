@@ -155,65 +155,6 @@ public class ClientDataContainer {
         return null;
     }
 
-
-
-
-//    public ClientDataContainer(ClientDataContainer clientDataContainer) {
-//        validateAgencyIdAndSiteId(clientDataContainer.agencyId, clientDataContainer.siteId);
-//        this.agencyId = clientDataContainer.agencyId;
-//        this.siteId = clientDataContainer.siteId;
-//    }
-
-//    public ClientDataContainer(ClientDataContainer clientDataContainer) {
-//        validateAgencyIdAndSiteId(agencyId, siteId);
-//        this.siteId = clientDataContainer.siteId;
-//        this.agencyId = clientDataContainer.agencyId;
-//        this.rateSel = clientDataContainer.rateSel;
-//        this.startDate = clientDataContainer.startDate;
-//    }
-
-
-//    public Map<String, String> makeClientInfoMap(ClientDataContainer clientDataContainer) {
-//        Map<String, String> clientInfoMap = new HashMap<>();
-//        clientInfoMap.put("companyName", clientDataContainer.companyName);
-//        clientInfoMap.put("bizNumber", clientDataContainer.bizNumber);
-//        clientInfoMap.put("ceoName", clientDataContainer.ceoName);
-//        return clientInfoMap;
-//    }
-
-
-//    public Map<String, String> checkedExtensionStatus(ClientDataContainer clientDataContainer) {
-//        if (clientDataContainer.extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-//            return createAgencySiteIdMap(clientDataContainer.agencyId, clientDataContainer.siteId);
-//        }
-//        return Collections.emptyMap();
-//    }
-
-//    public String concatenateSiteId(ClientDataContainer clientDataContainer) {
-//        validateAgencyIdAndSiteId(clientDataContainer.agencyId, clientDataContainer.siteId);
-//        return clientDataContainer.agencyId + "-" + clientDataContainer.siteId;
-//    }
-
-//    public String getAgencyStatus(ClientDataContainer searchedClient) {
-//        return searchedClient.siteStatus;
-//    }
-
-//    public String getAgencyScheduledRateSel(ClientDataContainer searchedClient) {
-//        return searchedClient.scheduledRateSel;
-//    }
-
-//    public String getClientMethod(ClientDataContainer receivedClient) {
-//        String method = receivedClient.method;
-//        if (!method.equals("card") && !method.equals("vbank")) {
-//            throw new IllegalArgumentException("Invalid method");
-//        }
-//        return receivedClient.method;
-//    }
-
-
-
-
-
     /* 표준 결제창 정보 세팅 관련 */
     public String agencyIdForRetrieve() {
         validateAgencyIdAndSiteId(agencyId, siteId);
