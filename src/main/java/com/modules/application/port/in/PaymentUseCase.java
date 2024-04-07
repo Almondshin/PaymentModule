@@ -18,7 +18,7 @@ public interface PaymentUseCase {
     String makeTradeNum();
     AgencyProducts getAgencyProductByRateSel(String rateSel);
     Map<String, Integer> getExcessAmount(List<PaymentHistoryDataContainer> list);
+    Map<String, Integer> getExcessAmount(PaymentHistoryDataContainer paymentHistory);
     void insertAutoPayPaymentHistory(String agencyId, String siteId, AgencyProducts product,String reqData);
     String makeTargetUrl(String agencyId,  String msgType);
 }
-

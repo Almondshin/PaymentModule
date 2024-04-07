@@ -77,7 +77,6 @@ public class EncryptDataService implements EncryptUseCase {
      */
     @Override
     public byte[] decryptData(ClientDataContainer clientDataContainer, Map<String,String> keyIv) {
-        Map<String, String> target = keyIv;
         byte[] key = Base64.getDecoder().decode(keyIv.get("agencyKey"));
         byte[] iv = Base64.getDecoder().decode(keyIv.get("agencyIv"));
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");

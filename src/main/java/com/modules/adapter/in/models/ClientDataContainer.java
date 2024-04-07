@@ -7,9 +7,16 @@ import com.modules.application.enums.EnumSiteStatus;
 import com.modules.application.exceptions.enums.EnumResultCode;
 import com.modules.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.modules.application.exceptions.exceptions.NoExtensionException;
+import com.modules.application.utils.Utils;
 import lombok.Setter;
 import lombok.ToString;
 
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -59,10 +66,10 @@ public class ClientDataContainer {
     private String vatAmt;
     private String taxFreeAmt;
 
+
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
 
     private static final String NUMBERS_ONLY_PATTERN = "^[0-9]+$";
-
 
     private boolean isValidAgencyId(String agencyId) {
         return agencyId.matches(AGENCY_SITE_ID_PATTERN);
@@ -91,12 +98,52 @@ public class ClientDataContainer {
         return this.encryptData;
     }
 
-    public boolean verifyHmacSHA256(String calculatedHmac) {
-        String receivedHmac = this.verifyInfo;
-        return receivedHmac.equals(calculatedHmac);
+    public boolean isVerifiedHmac(String agencyKey, String agencyIv) {
+        return this.verifyInfo.equals(hmacSHA256(agencyKey, agencyIv));
     }
 
-    public boolean verifyReceivedMessageType(String messageType) {
+    public ClientDataContainer registerAgencyInfo(String agencyKey, String agencyIv) {
+        String registerInfo = new String(decryptData(agencyKey, agencyIv));
+        return Utils.jsonStringToObject(registerInfo, ClientDataContainer.class);
+    }
+
+    private String hmacSHA256(String agencyKey, String agencyIv) {
+        // KEY + Message => Hash 생성
+        // Hash Data (VerifyInfo) => Server
+        // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
+        // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
+        // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
+        String hmacKeyString = this.agencyId;
+        String target = new String(decryptData(agencyKey, agencyIv));
+
+        try {
+            byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(hmacKey, "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            byte[] hashed = sha256_HMAC.doFinal(target.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private byte[] decryptData(String agencyKey, String agencyIv) {
+        byte[] key = Base64.getDecoder().decode(agencyKey);
+        byte[] iv = Base64.getDecoder().decode(agencyIv);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+            return cipher.doFinal(Base64.getDecoder().decode(this.encryptData));
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isVerifiedMessageType(String messageType) {
         boolean isCancelType = messageType.equals("cancel");
         boolean isRegType = messageType.equals("reg");
         boolean isGetType = messageType.equals("status");
@@ -154,6 +201,7 @@ public class ClientDataContainer {
         }
         return null;
     }
+
 
     /* 표준 결제창 정보 세팅 관련 */
     public String agencyIdForRetrieve() {
@@ -253,7 +301,7 @@ public class ClientDataContainer {
         return this.method;
     }
 
-    public String fetchPaymentPrice( ) {
+    public String fetchPaymentPrice() {
         if (!isValidSalesPrice(this.salesPrice)) {
             throw new IllegalArgumentException("Invalid sales price");
         }
@@ -268,11 +316,11 @@ public class ClientDataContainer {
                 && this.scheduledRateSel.toLowerCase().contains("auto");
     }
 
-    public boolean isScheduledPaymentEnabled(){
+    public boolean isScheduledPaymentEnabled() {
         return (this.scheduledRateSel != null && !this.scheduledRateSel.isEmpty());
     }
 
-    public String rateSelForRetrieve(String type){
+    public String rateSelForRetrieve(String type) {
         if (type.equals("scheduled")) {
             return this.scheduledRateSel;
         }
