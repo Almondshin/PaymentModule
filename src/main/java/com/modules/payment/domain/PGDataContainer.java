@@ -50,7 +50,7 @@ public class PGDataContainer {
     }
 
 
-    public PGDataContainer(String type, String mchtId, String tradeNum) {
+    public PGDataContainer(String type, String mchtId, String tradeNum, String cnclAmt) {
         String trdDt = LocalDateTime.now().format(DATE_FORMATTER);
         String trdTm = LocalDateTime.now().format(TIME_FORMATTER);
         if (type.equals("cancel_params")) {
@@ -64,12 +64,12 @@ public class PGDataContainer {
             this.trdTm = trdTm;
         }
         if (type.equals("cancel_data")) {
-            makeCancelPGData(trdDt, trdTm, mchtId);
+            makeCancelPGData(trdDt, trdTm, mchtId, cnclAmt);
         }
     }
 
 
-    public PGDataContainer(String type, String mchtId, String tradeNum, String billKey) {
+    public PGDataContainer(String type, String mchtId, String tradeNum, String billKey, String trdAmt) {
         this.mchtId = mchtId;
         this.mchtTrdNo = tradeNum;
         String trdDt = LocalDateTime.now().format(DATE_FORMATTER);
@@ -85,17 +85,17 @@ public class PGDataContainer {
             this.trdTm = trdTm;
         }
         if (type.equals("bill_data")) {
-            makeBillPGData("상품명", trdDt, trdTm, billKey, mchtId);
+            makeBillPGData("상품명", trdDt, trdTm, billKey, mchtId, trdAmt);
         }
     }
 
-    private void makeCancelPGData(String trdDt, String trdTm, String mchtId) {
+    private void makeCancelPGData(String trdDt, String trdTm, String mchtId, String cnclAmt) {
         this.orgTrdNo = this.mchtTrdNo;
         this.crcCd = CRC_CD;
         this.cnclOrd = CRC_ORD;
-        this.cnclAmt = this.trdAmt;
+        this.cnclAmt = cnclAmt;
         this.pktHash = pktHash(trdDt, trdTm, mchtId);
-        this.cnclAmt = encodeAmount("cancel");
+        this.cnclAmt = encodeAmount(cnclAmt);
     }
 
     private String pktHash(String trdDt, String trdTm, String mchtId) {
@@ -108,22 +108,17 @@ public class PGDataContainer {
         }
     }
 
-    private String encodeAmount(String type) {
+    private String encodeAmount(String amount) {
         Constant constant = new Constant();
         try {
-            if (type.equals("cancel")) {
-                return Base64.getEncoder().encodeToString(PGUtils.aes256EncryptEcb(constant.AES256_KEY, this.cnclAmt));
-            }
-            if (type.equals("bill")) {
-                return Base64.getEncoder().encodeToString(PGUtils.aes256EncryptEcb(constant.AES256_KEY, this.trdAmt));
-            }
+            return Base64.getEncoder().encodeToString(PGUtils.aes256EncryptEcb(constant.AES256_KEY, amount));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
 
-    private void makeBillPGData(String productName, String trdDt, String trdTm, String billKey, String mchtId) {
+    private void makeBillPGData(String productName, String trdDt, String trdTm, String billKey, String mchtId, String trdAmt) {
         this.pmtprdNm = productName;
         this.mchtCustNm = MCHT_CUST_NM;
         this.mchtCustId = MCHT_CUST_ID;
@@ -131,7 +126,7 @@ public class PGDataContainer {
         this.instmtMon = INSTMT_MON;
         this.crcCd = CRC_CD;
         this.pktHash = pktHash(trdDt, trdTm, mchtId);
-        this.trdAmt = encodeAmount("bill");
+        this.trdAmt = encodeAmount(trdAmt);
     }
 
 

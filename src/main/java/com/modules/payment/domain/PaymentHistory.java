@@ -63,10 +63,6 @@ public class PaymentHistory {
         return this.rateSel.toLowerCase().contains("autopay");
     }
 
-    public String pgTradeNumber() {
-        return this.pgTradeNum;
-    }
-
     public String paymentAmount() {
         return this.amount;
     }
@@ -75,6 +71,14 @@ public class PaymentHistory {
         return tradeNum.equals(tradeNumToCompare);
     }
 
+
+    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String billKey, String amount) {
+        return new PGDataContainer(type, mchtId, tradeNum, billKey, amount);
+    }
+
+    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String amount) {
+        return new PGDataContainer(type, mchtId, tradeNum, amount);
+    }
 
 
 }

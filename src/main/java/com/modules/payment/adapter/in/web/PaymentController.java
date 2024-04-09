@@ -104,7 +104,6 @@ public class PaymentController {
         return ResponseEntity.ok(manager);
     }
 
-
     /**
      * Sets payment site info.
      *
@@ -124,7 +123,7 @@ public class PaymentController {
     }
 
     @PostMapping(value = "/cardCancel")
-    public void requestCardCancelPayment(@RequestBody String requestSiteId) throws JsonProcessingException {
+    public void requestCardCancelPayment(@RequestBody String requestSiteId) {
         Map<String, Object> requestData = new HashMap<>();
 
         String merchantId = constant.getPG_CANCEL_MID_CARD(); // 상점아이디
@@ -150,8 +149,10 @@ public class PaymentController {
                 if (paymentHistory.isScheduledRateSel()) {
                     merchantId = constant.getPG_CANCEL_MID_AUTO();
                 }
-                PGDataContainer params = new PGDataContainer("cancel_params", merchantId, tradeNum);
-                PGDataContainer data = new PGDataContainer("cancel_data", "", "");
+
+                String amount = paymentHistory.paymentAmount();
+                PGDataContainer params = new PGDataContainer("cancel_params", merchantId, tradeNum, amount);
+                PGDataContainer data = new PGDataContainer("cancel_data", "", "", amount);
 
                 requestData.put("params", params);
                 requestData.put("data", data);
@@ -197,6 +198,7 @@ public class PaymentController {
                                 .filter(PaymentHistory::isActiveTradeTraceAndPassExtraAmountStatus)
                                 .collect(Collectors.toList());
 
+                        PaymentHistory paymentHistory = paymentHistoryList.get(0);
                         int excessAmount = 0;
                         if (paymentHistoryList.size() > 2) {
                             Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
@@ -205,18 +207,21 @@ public class PaymentController {
                             excessAmount = excessMap.get("excessAmount");
                         }
 
-                        Product amount = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic") + excessAmount);
+                        //TODO
+                        // 금액 가져오는 부분 수정 필요
+//                        String amount = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic") + excessAmount).toString();
+                        String amount = paymentHistory.paymentAmount();
                         Product products = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("scheduled"));
 
-                        String billKey = paymentHistoryList.get(0).retrieveBillKey();
+                        String billKey = paymentHistory.retrieveBillKey();
                         String tradeNum = paymentUseCase.makeTradeNum();
 
                         String merchantId = constant.PG_MID_AUTO;
                         String hashCipher = "";
 
                         try {
-                            PGDataContainer params = new PGDataContainer("bill_params", merchantId, tradeNum, "");
-                            PGDataContainer data = new PGDataContainer("bill_data", merchantId, tradeNum, billKey);
+                            PGDataContainer params = paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", amount);
+                            PGDataContainer data = paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount);
 
 
                             hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
