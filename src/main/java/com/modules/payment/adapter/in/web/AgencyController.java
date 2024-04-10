@@ -37,7 +37,6 @@ public class AgencyController {
         this.notiUseCase = notiUseCase;
     }
 
-
     /**
      * 사이트 상태 획득 API
      *

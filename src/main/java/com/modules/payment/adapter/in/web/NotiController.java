@@ -2,6 +2,7 @@ package com.modules.payment.adapter.in.web;
 
 import com.modules.payment.application.port.in.EncryptUseCase;
 import com.modules.payment.application.port.in.NotiUseCase;
+import com.modules.payment.application.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,39 +28,34 @@ public class NotiController {
     }
 
     @PostMapping("/siteStatus")
-    public ResponseEntity<?> siteStatusNoti(@RequestBody Map<String, String> responseData) throws GeneralSecurityException {
-        System.out.println("siteStatus 응답 : " + responseData.get("agencyId"));
-        System.out.println("siteStatus 응답 : " + responseData.get("siteId"));
-        System.out.println("siteStatus 응답 : " + responseData.get("siteStatus"));
-        System.out.println("siteStatus 응답 : " + responseData.get("detail"));
+    public ResponseEntity<String> siteStatusNoti(@RequestBody Map<String, String> responseData) {
+        final String msgType = "NotifyStatusSite";
+        final String agencyId = responseData.get("agencyId");
 
-        String plainData = encryptUseCase.mapToJSONString(responseData);
+        final String plainData = encryptUseCase.mapToJSONString(responseData);
+        final Map<String, String> keyIv = encryptUseCase.getKeyIv(agencyId);
+        final String encryptData = encryptUseCase.encryptData(plainData, keyIv);
+        final String verifyInfo = encryptUseCase.hmacSHA256(plainData, agencyId);
 
-        String keyString = responseData.get("agencyId");
-        Map<String, String> keyIv = encryptUseCase.getKeyIv(keyString);
-
-        String msgType = "NotifyStatusSite";
-        String encryptData = encryptUseCase.encryptData(plainData, keyIv);
-        String verifyInfo = encryptUseCase.hmacSHA256(plainData, responseData.get("agencyId"));
-
-        Map<String, String> requestStatusSiteMap = new HashMap<>();
-        requestStatusSiteMap.put("agencyId", responseData.get("agencyId"));
-        requestStatusSiteMap.put("msgType", msgType);
-        requestStatusSiteMap.put("encryptData", encryptData);
-        requestStatusSiteMap.put("verifyInfo", verifyInfo);
-
-        String requestStatusSiteData = encryptUseCase.mapToJSONString(requestStatusSiteMap);
-
-        String targetUrl = notiUseCase.getAgencyUrlByAgencyInfoKey(responseData.get("agencyId"), msgType);
+        final String targetUrl = notiUseCase.getAgencyUrlByAgencyInfoKey(agencyId, msgType);
+        final String requestStatusSiteData = prepareRequestData(agencyId, msgType, encryptData, verifyInfo);
 
         System.out.println("targetUrl : " + targetUrl);
         System.out.println("requestStatusSiteData : " + requestStatusSiteData);
 
-        //targetUrl : 가맹점 NotiURL 입니다.
         notiUseCase.sendNotification(targetUrl, requestStatusSiteData);
 
-        // 클라이언트에게 응답을 기대하지 않는 경우에도 "Success" 응답을 제공
         return ResponseEntity.ok("Success");
+    }
+
+
+    private String prepareRequestData(String agencyId, String msgType, String encryptData, String verifyInfo) {
+        Map<String, String> requestStatusSiteMap = new HashMap<>();
+        requestStatusSiteMap.put("agencyId", agencyId);
+        requestStatusSiteMap.put("msgType", msgType);
+        requestStatusSiteMap.put("encryptData", encryptData);
+        requestStatusSiteMap.put("verifyInfo", verifyInfo);
+        return Utils.mapToJSONString(requestStatusSiteMap);
     }
 
 

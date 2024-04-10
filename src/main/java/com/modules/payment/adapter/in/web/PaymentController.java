@@ -206,10 +206,6 @@ public class PaymentController {
                             );
                             excessAmount = excessMap.get("excessAmount");
                         }
-
-                        //TODO
-                        // 금액 가져오는 부분 수정 필요
-//                        String amount = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic") + excessAmount).toString();
                         String amount = paymentHistory.paymentAmount();
                         Product products = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("scheduled"));
 
@@ -222,18 +218,12 @@ public class PaymentController {
                         try {
                             PGDataContainer params = paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", amount);
                             PGDataContainer data = paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount);
-
-
                             hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
-
                             responseData.put("params", params);
                             responseData.put("data", data);
-
                             String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
                             HttpClientUtil httpClientUtil = new HttpClientUtil();
-
                             String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
-
                             paymentUseCase.insertAutoPayPaymentHistory(info, paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic")), reqData);
 
                         } catch (Exception e) {
