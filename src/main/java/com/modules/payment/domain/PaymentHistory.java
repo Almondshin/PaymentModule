@@ -2,7 +2,6 @@ package com.modules.payment.domain;
 
 import com.modules.payment.application.enums.EnumExtraAmountStatus;
 import com.modules.payment.application.enums.EnumTradeTrace;
-import com.modules.payment.application.utils.PGUtils;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 
@@ -45,7 +44,7 @@ public class PaymentHistory {
     private String memo;
 
 
-    public boolean isActiveTradeTraceAndPassExtraAmountStatus() {
+    public boolean isPassed() {
         return this.trTrace.equals(EnumTradeTrace.USED.getCode())
                 && this.extraAmountStatus.equals(EnumExtraAmountStatus.PASS.getCode());
     }
@@ -53,7 +52,6 @@ public class PaymentHistory {
     public String retrieveBillKey() {
         return this.billKey;
     }
-
 
     public boolean isSameTradeNum(String tradeNum) {
         return this.tradeNum.equals(tradeNum);
@@ -63,17 +61,24 @@ public class PaymentHistory {
         return this.rateSel.toLowerCase().contains("autopay");
     }
 
+    public String tradeNum() {
+        if (!isValidData()) {
+            throw new IllegalArgumentException("Invalid data : " + this.agencyId + ", " + this.siteId + ", " + this.tradeNum);
+        }
+        return this.tradeNum;
+    }
+
     public String paymentAmount() {
         return this.amount;
     }
 
-    public boolean isTradeNum(String tradeNumToCompare) {
-        return tradeNum.equals(tradeNumToCompare);
+
+    private boolean isValidData() {
+        return this.agencyId != null && this.siteId != null && this.tradeNum != null;
     }
 
-
-    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String billKey, String amount) {
-        return new PGDataContainer(type, mchtId, tradeNum, billKey, amount);
+    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String billKey, String amount, String productName) {
+        return new PGDataContainer(type, mchtId, tradeNum, billKey, amount, productName);
     }
 
     public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String amount) {

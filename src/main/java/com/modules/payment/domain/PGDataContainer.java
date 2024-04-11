@@ -69,7 +69,7 @@ public class PGDataContainer {
     }
 
 
-    public PGDataContainer(String type, String mchtId, String tradeNum, String billKey, String trdAmt) {
+    public PGDataContainer(String type, String mchtId, String tradeNum, String billKey, String trdAmt, String productName) {
         this.mchtId = mchtId;
         this.mchtTrdNo = tradeNum;
         String trdDt = LocalDateTime.now().format(DATE_FORMATTER);
