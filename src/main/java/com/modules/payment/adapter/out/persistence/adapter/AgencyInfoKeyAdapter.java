@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyInfoKeyJpaEntity;
+import com.modules.payment.domain.entity.AgencyInfoKeyJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyInfoKeyRepository;
 import com.modules.payment.application.domain.AgencyInfoKey;
 import com.modules.payment.application.exceptions.enums.EnumResultCode;

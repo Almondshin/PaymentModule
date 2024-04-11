@@ -1,7 +1,7 @@
 package com.modules.payment.adapter.out.persistence.repository.querydsl.impl;
 
 import com.modules.adapter.out.persistence.entity.QPaymentJpaEntity;
-import com.modules.payment.adapter.out.persistence.entity.PaymentJpaEntity;
+import com.modules.payment.domain.entity.PaymentJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.querydsl.PaymentHistoryRepositoryQueryDSL;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;

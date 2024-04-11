@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.StatDayJpaEntity;
+import com.modules.payment.domain.entity.StatDayJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.StatDayRepository;
 import com.modules.payment.application.domain.StatDay;
 import com.modules.payment.application.port.out.load.LoadStatDataPort;

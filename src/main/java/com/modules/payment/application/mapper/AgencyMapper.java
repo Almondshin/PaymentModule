@@ -1,6 +1,6 @@
 package com.modules.payment.application.mapper;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyJpaEntity;
+import com.modules.payment.domain.entity.AgencyJpaEntity;
 import com.modules.payment.domain.Agency;
 
 public class AgencyMapper {

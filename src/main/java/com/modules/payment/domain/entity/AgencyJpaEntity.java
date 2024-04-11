@@ -1,4 +1,4 @@
-package com.modules.payment.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
 import lombok.*;
 
@@ -12,6 +12,7 @@ import java.util.Date;
 @Entity
 @Table(name = "AGENCY_INFO")
 @Builder
+@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.repository.querydsl;
 
-import com.modules.payment.adapter.out.persistence.entity.PaymentJpaEntity;
+import com.modules.payment.domain.entity.PaymentJpaEntity;
 
 import javax.validation.constraints.NotBlank;
 import java.util.List;

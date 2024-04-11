@@ -1,6 +1,6 @@
 package com.modules.payment.domain;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyJpaEntity;
+import com.modules.payment.domain.entity.AgencyJpaEntity;
 import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.enums.EnumAgency;
 import com.modules.payment.application.enums.EnumExtensionStatus;
@@ -50,6 +50,8 @@ public class Agency {
     private String scheduledRateSel;
     private String siteStatus;
     private String extensionStatus;
+    private String excessCount;
+
     private Date startDate;
     private Date endDate;
 
@@ -362,6 +364,7 @@ public class Agency {
                 .scheduledRateSel(this.scheduledRateSel)
                 .siteStatus(this.siteStatus)
                 .extensionStatus(this.extensionStatus)
+                .excessCount(this.excessCount)
                 .startDate(this.startDate)
                 .endDate(this.endDate)
                 .settleManagerName(this.settleManagerName)

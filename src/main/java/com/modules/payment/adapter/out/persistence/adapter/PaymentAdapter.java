@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.PaymentJpaEntity;
+import com.modules.payment.domain.entity.PaymentJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.PaymentHistoryRepository;
 import com.modules.payment.application.domain.Agency;
 import com.modules.payment.application.enums.EnumExtraAmountStatus;

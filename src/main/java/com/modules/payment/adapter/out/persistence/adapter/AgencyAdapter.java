@@ -1,7 +1,7 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyJpaEntity;
-import com.modules.payment.adapter.out.persistence.entity.SiteInfoJpaEntity;
+import com.modules.payment.domain.entity.AgencyJpaEntity;
+import com.modules.payment.domain.entity.SiteInfoJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyRepository;
 import com.modules.payment.adapter.out.persistence.repository.SiteInfoRepository;
 import com.modules.payment.application.enums.EnumExtensionStatus;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,7 +37,8 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public Optional<Agency> getAgencyInfo(Agency agency) {
         AgencyJpaEntity entity = agency.toEntity();
-        Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
+        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
         if (foundAgencyInfo.isEmpty()) {
             throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency);
         }
@@ -55,7 +55,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Override
     @Transactional
     public void registerAgency(Agency agency) {
-        AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
+        AgencyJpaEntity entity = agency.toEntity();
         Optional<SiteInfoJpaEntity> foundSiteIdBySiteInfo = siteInfoRepository.findBySiteId(entity.getSiteId());
         Optional<AgencyJpaEntity> foundSiteIdByAgencyInfo = agencyRepository.findBySiteId(entity.getSiteId());
 
@@ -63,90 +63,49 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         if (foundSiteIdBySiteInfo.isPresent() || foundSiteIdByAgencyInfo.isPresent()) {
             throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
         }
-        client.setSiteStatus(EnumSiteStatus.PENDING.getCode());
-        client.setExtensionStatus(EnumExtensionStatus.DEFAULT.getCode());
-        agencyRepository.save(convertToEntity(agency, client, settleManager));
+        entity.setSiteId(entity.getAgencyId() + "-" + entity.getSiteId());
+        entity.setSiteStatus(EnumSiteStatus.PENDING.getCode());
+        entity.setExtensionStatus(EnumExtensionStatus.DEFAULT.getCode());
+        agencyRepository.save(entity);
     }
 
     @Override
     @Transactional
-    public void updateAgency(Agency agency) {
-        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
-        Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), siteId);
+    public void updateAgency(Agency agency, String paymentStatus) {
+        AgencyJpaEntity entity = agency.toEntity();
+        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
         if (optionalEntity.isPresent()) {
-            AgencyJpaEntity entity = optionalEntity.get();
-            if (entity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
-                if (!paymentStatus.equals(EnumPaymentStatus.NOT_DEPOSITED.getCode())){
-                    entity.setStartDate(client.getStartDate());
-                    entity.setEndDate(client.getEndDate());
+            AgencyJpaEntity searchedEntity = optionalEntity.get();
+            if (searchedEntity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
+                if (!paymentStatus.equals(EnumPaymentStatus.NOT_DEPOSITED.getCode())) {
+                    searchedEntity.setStartDate(entity.getStartDate());
+                    searchedEntity.setEndDate(entity.getEndDate());
                 }
-                entity.setRateSel(client.getRateSel());
+                searchedEntity.setRateSel(entity.getRateSel());
             }
-            if (client.getRateSel().toLowerCase().contains("autopay")){
-                entity.setScheduledRateSel(client.getRateSel());
+            if (entity.getRateSel().toLowerCase().contains("autopay")) {
+                searchedEntity.setScheduledRateSel(entity.getRateSel());
             }
-            if (!paymentStatus.equals(EnumPaymentStatus.NOT_DEPOSITED.getCode())){
-                entity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
+            if (!paymentStatus.equals(EnumPaymentStatus.NOT_DEPOSITED.getCode())) {
+                searchedEntity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
             }
         } else {
-            throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() + ", " + agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + entity.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 
     @Override
     @Transactional
     public void updateAgencyExcessCount(Agency agency, int excessCount) {
-        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
-        Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(),siteId);
-        if (optionalEntity.isPresent()){
-            AgencyJpaEntity entity = optionalEntity.get();
-            entity.setExcessCount(Integer.toString(excessCount));
+        AgencyJpaEntity entity = agency.toEntity();
+        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
+        if (optionalEntity.isPresent()) {
+            AgencyJpaEntity searchedEntity = optionalEntity.get();
+            searchedEntity.setExcessCount(Integer.toString(excessCount));
         } else {
-            throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() + ", " + agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + entity.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }
-    }
-
-
-    private AgencyJpaEntity agencyAndClientConvertToEntity(Agency agency) {
-        AgencyJpaEntity entity = new AgencyJpaEntity();
-        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
-        entity.setAgencyId(agency.getAgencyId());
-        entity.setSiteId(siteId);
-        entity.setRateSel(agency.getRateSel());
-        entity.setStartDate(agency.getStartDate());
-        entity.setEndDate(agency.getEndDate());
-        return entity;
-    }
-
-    private AgencyJpaEntity convertToEntity(Agency agency) {
-        AgencyJpaEntity agencyJpaEntity = new AgencyJpaEntity();
-
-        agencyJpaEntity.setAgencyId(agency.getAgencyId());
-        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
-        agencyJpaEntity.setSiteId(siteId);
-
-        agencyJpaEntity.setSiteName(client.getSiteName());
-        agencyJpaEntity.setCompanyName(client.getCompanyName());
-        agencyJpaEntity.setBusinessType(client.getBusinessType());
-        agencyJpaEntity.setBizNumber(client.getBizNumber());
-        agencyJpaEntity.setCeoName(client.getCeoName());
-        agencyJpaEntity.setPhoneNumber(client.getPhoneNumber());
-        agencyJpaEntity.setAddress(client.getAddress());
-        agencyJpaEntity.setCompanySite(client.getCompanySite());
-        agencyJpaEntity.setEmail(client.getEmail());
-        agencyJpaEntity.setRateSel(client.getRateSel());
-        agencyJpaEntity.setSiteStatus(client.getSiteStatus());
-        agencyJpaEntity.setExtensionStatus(client.getExtensionStatus());
-        agencyJpaEntity.setStartDate(client.getStartDate());
-        agencyJpaEntity.setEndDate(client.getEndDate());
-
-        agencyJpaEntity.setServiceUseAgree(client.getServiceUseAgree());
-
-        agencyJpaEntity.setSettleManagerName(settleManager.getSettleManagerName());
-        agencyJpaEntity.setSettleManagerTelNumber(settleManager.getSettleManagerTelNumber());
-        agencyJpaEntity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
-        agencyJpaEntity.setSettleManagerEmail(settleManager.getSettleManagerEmail());
-
-        return agencyJpaEntity;
     }
 }

@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyProductsJpaEntity;
+import com.modules.payment.domain.entity.AgencyProductsJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyProductRepository;
 import com.modules.payment.application.domain.AgencyProducts;
 import com.modules.payment.application.port.out.load.LoadAgencyProductDataPort;
