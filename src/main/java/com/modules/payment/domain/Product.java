@@ -18,4 +18,9 @@ public class Product {
     private String month;
     private String feePerCase;
     private String excessPerCase;
+
+
+    public String productName(){
+        return this.productName;
+    }
 }

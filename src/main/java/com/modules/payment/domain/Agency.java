@@ -29,10 +29,12 @@ public class Agency {
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
     private static final String SCHEDULED_RATE_SEL = "autopay";
 
+    private static final String CANCEL = "cancel";
+    private static final String EXTEND = "extend";
+
     private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss");
-
 
     private String agencyId;
     private String siteId;
@@ -77,9 +79,14 @@ public class Agency {
         return siteId.matches(AGENCY_SITE_ID_PATTERN);
     }
 
-    private Agency(String agencyId, String siteId) {
+    public Agency(String type, String agencyId, String siteId) {
         this.agencyId = agencyId;
         this.siteId = siteId;
+
+        if (type.equals(CANCEL)) {
+            this.agencyId = agencyId;
+            this.siteId = siteId.split("-")[1];
+        }
     }
 
 
@@ -107,13 +114,13 @@ public class Agency {
         return this.verifyInfo.equals(Utils.hmacSHA256(agencyKey, agencyIv, this.agencyId));
     }
 
-    public boolean isVerifiedRateSel() {
+    private boolean isValidRateSel() {
         return this.rateSel != null;
     }
 
     public String rateSel(Agency searchedAgency) {
         return Stream.of(this, searchedAgency)
-                .filter(Agency::isVerifiedRateSel)
+                .filter(Agency::isValidRateSel)
                 .map(agency -> agency.rateSel)
                 .findFirst()
                 .orElse("Error: Cannot get rateSel as it was not found");
@@ -135,10 +142,9 @@ public class Agency {
             case DEFAULT: {
                 if (this.startDate != null) {
                     return sdf.format(this.startDate);
-                } else if (searchedAgency.startDate != null) {
+                }
+                if (searchedAgency.startDate != null) {
                     return sdf.format(searchedAgency.startDate);
-                } else {
-                    return null;
                 }
             }
             case EXTENDABLE: {
@@ -258,12 +264,16 @@ public class Agency {
 
     public Agency checkedExtendable() {
         EnumExtensionStatus status = Arrays.stream(EnumExtensionStatus.values())
-                .filter(e -> this.extensionStatus.equals(e.getCode()))
+                .filter(e -> Optional.ofNullable(this.extensionStatus)
+                        .orElseThrow(() -> new NullPointerException("extensionStatus is null"))
+                        .equals(e.getCode()))
                 .findFirst()
-                .orElse(null);
-        if (status != null && status.getCode().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            return new Agency(this.agencyId, this.siteId);
+                .orElseThrow(() -> new IllegalStateException("No matching EnumExtensionStatus found for code: " + this.extensionStatus));
+
+        if (status.getCode().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+            return new Agency(EXTEND, this.agencyId, this.siteId);
         }
+
         throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
     }
 
@@ -324,10 +334,6 @@ public class Agency {
                 && this.extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())
                 && this.scheduledRateSel != null
                 && this.scheduledRateSel.toLowerCase().contains("auto");
-    }
-
-    public boolean isScheduledPaymentEnabled() {
-        return (this.scheduledRateSel != null && !this.scheduledRateSel.isEmpty());
     }
 
     public String selectRateSelBasedOnType(String type) {

@@ -1,6 +1,5 @@
 package com.modules.payment.adapter.in.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.modules.payment.application.enums.EnumExtensionStatus;
 import com.modules.payment.application.exceptions.exceptions.IllegalStatusException;
 import com.modules.payment.application.port.in.AgencyUseCase;
@@ -19,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +77,8 @@ public class PaymentController {
         int excessAmount = 0;
         ResponseManager manager;
         try {
-            Agency agencyInfo = agencyUseCase.getAgencyInfo(agency).orElseThrow(() -> new IllegalArgumentException("Agency not found"));
+            Agency agencyInfo = agencyUseCase.getAgencyInfo(agency)
+                    .orElseThrow(() -> new IllegalArgumentException("Agency not found"));
             clientInfo = agencyInfo.makeCompanyInfo();
             rateSel = agency.rateSel(agencyInfo);
             startDate = agency.startDate(agencyInfo);
@@ -112,52 +110,39 @@ public class PaymentController {
      */
     @PostMapping("/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody Agency agency) {
+        paymentUseCase.checkMchtParams(agency);
         String tradeNum = paymentUseCase.makeTradeNum();
         PGResponseManager manager = agency.pgResponseMsg(tradeNum);
-        try {
-            paymentUseCase.checkMchtParams(agency);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
         return ResponseEntity.ok(manager);
     }
 
+
     @PostMapping(value = "/cardCancel")
     public void requestCardCancelPayment(@RequestBody String requestSiteId) {
-        Map<String, Object> requestData = new HashMap<>();
 
-        String merchantId = constant.getPG_CANCEL_MID_CARD(); // 상점아이디
-        String tradeNum = paymentUseCase.makeTradeNum();
+        PaymentHistory convertPaymentHistory = Optional.ofNullable(Utils.jsonStringToObject(requestSiteId, PaymentHistory.class))
+                .orElseThrow(() -> new IllegalArgumentException("Not found PaymentHistory for tradeNum : " + requestSiteId));
 
-        Map<String, String> mapData = Utils.jsonStringToObject(requestSiteId, Map.class);
-        String modifiedSiteId = mapData.get("siteId").split("-")[1];
-        mapData.put("siteId", modifiedSiteId);
-        String modifiedRequestSiteId = Utils.mapToJSONString(mapData);
+        paymentUseCase.getPaymentHistoryByTradeNum(convertPaymentHistory.tradeNum()).ifPresent(paymentHistory -> {
+            Map<String, Object> requestData = new HashMap<>();
 
-        Agency agencyInfo = Utils.jsonStringToObject(modifiedRequestSiteId, Agency.class);
+            String hashCipher = "";
+            String merchantId = constant.getPG_CANCEL_MID_CARD();
+            String tradeNum = paymentUseCase.makeTradeNum();
 
-        Optional<PaymentHistory> optPaymentHistory = paymentUseCase.getPaymentHistoryByAgency(agencyInfo.checkedExtendable())
-                .stream()
-                .filter(e -> e.isTradeNum(mapData.get("tradeNum")))
-                .findFirst();
+            if (paymentHistory.isScheduledRateSel()) {
+                merchantId = constant.getPG_CANCEL_MID_AUTO();
+            }
 
-        String hashCipher = "";
+            String amount = paymentHistory.paymentAmount();
+            PGDataContainer params = new PGDataContainer("cancel_params", merchantId, tradeNum, amount);
+            PGDataContainer data = new PGDataContainer("cancel_data", "", "", amount);
 
-        if (optPaymentHistory.isPresent()) {
+            requestData.put("params", params);
+            requestData.put("data", data);
+            String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
+
             try {
-                PaymentHistory paymentHistory = optPaymentHistory.get();
-                if (paymentHistory.isScheduledRateSel()) {
-                    merchantId = constant.getPG_CANCEL_MID_AUTO();
-                }
-
-                String amount = paymentHistory.paymentAmount();
-                PGDataContainer params = new PGDataContainer("cancel_params", merchantId, tradeNum, amount);
-                PGDataContainer data = new PGDataContainer("cancel_data", "", "", amount);
-
-                requestData.put("params", params);
-                requestData.put("data", data);
-                String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
-
                 hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
 
                 HttpClientUtil httpClientUtil = new HttpClientUtil();
@@ -170,72 +155,64 @@ public class PaymentController {
             } finally {
                 logger.info("[" + tradeNum + "][SHA256 HASHING] Cipher Text[" + hashCipher + "]");
             }
-        }
+        });
     }
 
-    /**
-     * Request bill key payment.
-     *
-     * @param requestMsg the request map
-     */
     @PostMapping(value = "/bill")
     public void requestBillKeyPayment(@RequestBody String requestMsg) {
-        Map<String, Object> responseData = new HashMap<>();
 
         if (requestMsg.equals("BillPaymentService")) {
-            List<Agency> agencyInfoList = agencyUseCase.selectAgencyInfo()
+            agencyUseCase.selectAgencyInfo()
                     .stream()
                     .filter(Agency::isCurrentScheduledRateSel)
-                    .collect(Collectors.toList());
+                    .forEach(agencyInfo -> {
+                        agencyUseCase.getAgencyInfo(agencyInfo).ifPresent(info -> {
+                            List<PaymentHistory> paymentHistoryList = paymentUseCase.getPaymentHistoryByAgency(info.checkedExtendable())
+                                    .stream()
+                                    .filter(PaymentHistory::isPassed)
+                                    .collect(Collectors.toList());
 
-            agencyInfoList.forEach(agencyInfo -> {
-                Optional<Agency> clientDataModel = agencyUseCase.getAgencyInfo(agencyInfo);
-                if (clientDataModel.isPresent()) {
-                    Agency info = clientDataModel.get();
-                    if (info.isScheduledPaymentEnabled()) {
-                        List<PaymentHistory> paymentHistoryList = paymentUseCase.getPaymentHistoryByAgency(info.checkedExtendable())
-                                .stream()
-                                .filter(PaymentHistory::isActiveTradeTraceAndPassExtraAmountStatus)
-                                .collect(Collectors.toList());
+                            if (!paymentHistoryList.isEmpty()) {
+                                int excessAmount = 0;
+                                if (paymentHistoryList.size() > 2) {
+                                    Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
+                                            paymentUseCase.getPaymentHistoryByAgency(info.checkedExtendable())
+                                    );
+                                    excessAmount = excessMap.get("excessAmount");
+                                }
+                                PaymentHistory paymentHistory = paymentHistoryList.get(0);
 
-                        PaymentHistory paymentHistory = paymentHistoryList.get(0);
-                        int excessAmount = 0;
-                        if (paymentHistoryList.size() > 2) {
-                            Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
-                                    paymentUseCase.getPaymentHistoryByAgency(info.checkedExtendable())
-                            );
-                            excessAmount = excessMap.get("excessAmount");
-                        }
-                        String amount = paymentHistory.paymentAmount();
-                        Product products = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("scheduled"));
+                                String amount = paymentHistory.paymentAmount() + excessAmount;
+                                String productName = paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("scheduled")).productName();
 
-                        String billKey = paymentHistory.retrieveBillKey();
-                        String tradeNum = paymentUseCase.makeTradeNum();
+                                String billKey = paymentHistory.retrieveBillKey();
+                                String tradeNum = paymentUseCase.makeTradeNum();
 
-                        String merchantId = constant.PG_MID_AUTO;
-                        String hashCipher = "";
+                                String merchantId = constant.PG_MID_AUTO;
+                                String hashCipher = "";
 
-                        try {
-                            PGDataContainer params = paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", amount);
-                            PGDataContainer data = paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount);
-                            hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
-                            responseData.put("params", params);
-                            responseData.put("data", data);
-                            String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
-                            HttpClientUtil httpClientUtil = new HttpClientUtil();
-                            String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
-                            paymentUseCase.insertAutoPayPaymentHistory(info, paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic")), reqData);
+                                PGDataContainer params = paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", "", "");
+                                PGDataContainer data = paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount, productName);
 
-                        } catch (Exception e) {
-                            logger.error("[" + tradeNum + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-                            throw new RuntimeException(e);
-                        } finally {
-                            logger.info("[" + tradeNum + "][SHA256 HASHING] Cipher Text[" + hashCipher + "]");
-                        }
-                    }
-                }
+                                try {
+                                    hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
+                                    Map<String, Object> responseData = new HashMap<>();
+                                    responseData.put("params", params);
+                                    responseData.put("data", data);
+                                    String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+                                    HttpClientUtil httpClientUtil = new HttpClientUtil();
+                                    String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
+                                    paymentUseCase.insertAutoPayPaymentHistory(info, paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic")), reqData);
 
-            });
+                                } catch (Exception e) {
+                                    logger.error("[" + tradeNum + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+                                    throw new RuntimeException(e);
+                                } finally {
+                                    logger.info("[" + tradeNum + "][SHA256 HASHING] Cipher Text[" + hashCipher + "]");
+                                }
+                            }
+                        });
+                    });
         }
     }
 

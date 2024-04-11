@@ -72,7 +72,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     //TODO
     // [중요!] 최적화
     @Override
-    public void checkMchtParams(Agency agency) throws ParseException {
+    public void checkMchtParams(Agency agency) {
         String clientPrice = agency.getSalesPrice();
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
@@ -242,10 +242,10 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public PaymentHistory getPaymentHistoryByTradeNum(String pgTradeNum) {
-        Optional<com.modules.payment.application.domain.PaymentHistory> optPaymentHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(pgTradeNum);
+    public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String pgTradeNum) {
+        Optional<PaymentHistory> optPaymentHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(pgTradeNum);
         if (optPaymentHistory.isPresent()) {
-            com.modules.payment.application.domain.PaymentHistory paymentHistory = optPaymentHistory.get();
+            PaymentHistory paymentHistory = optPaymentHistory.get();
             return convertClient(paymentHistory);
         }
         return null;
