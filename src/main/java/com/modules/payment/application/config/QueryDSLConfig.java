@@ -1,4 +1,4 @@
-package com.modules.payment.application.Config;
+package com.modules.payment.application.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.context.annotation.Bean;

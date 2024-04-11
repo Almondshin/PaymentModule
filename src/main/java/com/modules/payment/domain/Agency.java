@@ -1,6 +1,7 @@
 package com.modules.payment.domain;
 
-import com.modules.payment.application.Config.Constant;
+import com.modules.payment.adapter.out.persistence.entity.AgencyJpaEntity;
+import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.enums.EnumAgency;
 import com.modules.payment.application.enums.EnumExtensionStatus;
 import com.modules.payment.application.enums.EnumSiteStatus;
@@ -10,8 +11,7 @@ import com.modules.payment.application.exceptions.exceptions.IllegalStatusExcept
 import com.modules.payment.application.exceptions.exceptions.NoExtensionException;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.payment.application.utils.Utils;
-import lombok.AllArgsConstructor;
-import lombok.ToString;
+import lombok.Builder;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -22,8 +22,7 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-@ToString
-@AllArgsConstructor
+@Builder
 public class Agency {
 
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
@@ -88,7 +87,6 @@ public class Agency {
             this.siteId = siteId.split("-")[1];
         }
     }
-
 
     private void validateAgencyIdAndSiteId(String agencyId, String siteId) {
         if (!isValidAgencyId(agencyId) || !isValidSiteId(siteId)) {
@@ -205,6 +203,10 @@ public class Agency {
         if (missingField.isPresent()) {
             throw new IllegalArgumentException(missingField + " 필드가 비어 있습니다.");
         }
+    }
+
+    public boolean validateIdFields() {
+        return this.agencyId == null || this.agencyId.isEmpty() || this.siteId == null || this.siteId.isEmpty();
     }
 
     private Optional<String> checkRequiredFields() {
@@ -341,5 +343,32 @@ public class Agency {
             return this.scheduledRateSel;
         }
         return this.rateSel;
+    }
+
+    public AgencyJpaEntity toEntity() {
+        return AgencyJpaEntity.builder()
+                .agencyId(this.agencyId)
+                .siteId(this.siteId)
+                .siteName(this.siteName)
+                .companyName(this.companyName)
+                .businessType(this.businessType)
+                .bizNumber(this.bizNumber)
+                .ceoName(this.ceoName)
+                .phoneNumber(this.phoneNumber)
+                .address(this.address)
+                .companySite(this.companySite)
+                .email(this.email)
+                .rateSel(this.rateSel)
+                .scheduledRateSel(this.scheduledRateSel)
+                .siteStatus(this.siteStatus)
+                .extensionStatus(this.extensionStatus)
+                .startDate(this.startDate)
+                .endDate(this.endDate)
+                .settleManagerName(this.settleManagerName)
+                .settleManagerPhoneNumber(this.settleManagerPhoneNumber)
+                .settleManagerTelNumber(this.settleManagerTelNumber)
+                .settleManagerEmail(this.settleManagerEmail)
+                .serviceUseAgree(this.serviceUseAgree)
+                .build();
     }
 }

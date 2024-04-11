@@ -1,5 +1,7 @@
 package com.modules.payment.domain;
 
+import java.util.HashMap;
+
 public class Product {
     /* 결제 상품 */
     /*
@@ -22,5 +24,17 @@ public class Product {
 
     public String productName(){
         return this.productName;
+    }
+
+    public HashMap<String, String> productMap() {
+        HashMap<String, String> result = new HashMap<>();
+        result.put("type", this.productCode);
+        result.put("name", this.productName);
+        result.put("price", this.price);
+        result.put("basicOffer", this.offer);
+        result.put("month", this.month);
+        result.put("feePerCase", this.feePerCase);
+        result.put("excessPerCase", this.excessPerCase);
+        return result;
     }
 }

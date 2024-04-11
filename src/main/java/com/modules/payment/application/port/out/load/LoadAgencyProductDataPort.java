@@ -1,7 +1,10 @@
 package com.modules.payment.application.port.out.load;
 
-import com.modules.payment.application.domain.AgencyProducts;
+
+import com.modules.payment.domain.Product;
+
+import java.util.Optional;
 
 public interface LoadAgencyProductDataPort {
-    AgencyProducts getAgencyProductByRateSel(String rateSel);
+    Optional<Product> getAgencyProductByRateSel(String rateSel);
 }

@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.entity;
 
-import lombok.Data;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,7 +11,10 @@ import java.util.Date;
 
 @Entity
 @Table(name = "AGENCY_INFO")
-@Data
+@Builder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class AgencyJpaEntity {
 
 	@Id
@@ -69,4 +72,6 @@ public class AgencyJpaEntity {
 
 	@Column(name = "SERVICE_USE_AGREE")
 	private String serviceUseAgree;
+
+
 }

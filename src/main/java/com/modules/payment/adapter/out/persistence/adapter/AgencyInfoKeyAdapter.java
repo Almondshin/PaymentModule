@@ -26,7 +26,7 @@ public class AgencyInfoKeyAdapter implements LoadEncryptDataPort {
     public Optional<AgencyInfoKey> getAgencyInfoKey(String agencyId) {
         Optional<AgencyInfoKeyJpaEntity> entity = agencyInfoKeyRepository.findByAgencyId(agencyId);
         if (entity.isEmpty()){
-            throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency,agencyId);
+            throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency);
         }
         return entity.map(this::convertToAgencyInfoKeyDomain);
     }
