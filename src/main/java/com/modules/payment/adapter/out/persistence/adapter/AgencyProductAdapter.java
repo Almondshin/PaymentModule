@@ -1,5 +1,6 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
+import com.modules.payment.domain.Product;
 import com.modules.payment.domain.entity.AgencyProductsJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyProductRepository;
 import com.modules.payment.application.domain.AgencyProducts;
@@ -20,7 +21,7 @@ public class AgencyProductAdapter implements LoadAgencyProductDataPort {
 
     @Override
     @Transactional
-    public AgencyProducts getAgencyProductByRateSel(String rateSel) {
+    public Optional<Product> getAgencyProductByRateSel(String rateSel) {
         Optional<AgencyProductsJpaEntity> entity = agencyProductRepository.findByRateSel(rateSel);
         return entity.map(this::convertDomain).orElse(null);
     }

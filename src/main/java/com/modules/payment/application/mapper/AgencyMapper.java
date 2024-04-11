@@ -5,7 +5,7 @@ import com.modules.payment.domain.Agency;
 
 public class AgencyMapper {
 
-    public static Agency convertToAgency(AgencyJpaEntity entity){
+    public static Agency convertToDomain(AgencyJpaEntity entity){
         return Agency.builder()
                 .agencyId(entity.getAgencyId())
                 .siteId(entity.getSiteId().split("-")[1])

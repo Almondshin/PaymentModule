@@ -75,4 +75,7 @@ public class AgencyJpaEntity {
 	private String serviceUseAgree;
 
 
+	public String chainSiteId(){
+		return this.agencyId + "-" + this.siteId;
+	}
 }

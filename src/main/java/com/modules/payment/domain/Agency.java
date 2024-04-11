@@ -30,6 +30,7 @@ public class Agency {
 
     private static final String CANCEL = "cancel";
     private static final String EXTEND = "extend";
+    private static final String EXCESS = "excess";
 
     private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");

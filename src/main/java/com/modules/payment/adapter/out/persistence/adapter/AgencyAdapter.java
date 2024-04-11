@@ -1,7 +1,5 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.domain.entity.AgencyJpaEntity;
-import com.modules.payment.domain.entity.SiteInfoJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyRepository;
 import com.modules.payment.adapter.out.persistence.repository.SiteInfoRepository;
 import com.modules.payment.application.enums.EnumExtensionStatus;
@@ -14,6 +12,8 @@ import com.modules.payment.application.mapper.AgencyMapper;
 import com.modules.payment.application.port.out.load.LoadAgencyDataPort;
 import com.modules.payment.application.port.out.save.SaveAgencyDataPort;
 import com.modules.payment.domain.Agency;
+import com.modules.payment.domain.entity.AgencyJpaEntity;
+import com.modules.payment.domain.entity.SiteInfoJpaEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,18 +37,18 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public Optional<Agency> getAgencyInfo(Agency agency) {
         AgencyJpaEntity entity = agency.toEntity();
-        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        String siteId = entity.chainSiteId();
         Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
         if (foundAgencyInfo.isEmpty()) {
             throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency);
         }
-        return foundAgencyInfo.map(AgencyMapper::convertToAgency);
+        return foundAgencyInfo.map(AgencyMapper::convertToDomain);
     }
 
     @Override
     public List<Agency> selectAgencyInfo() {
         return agencyRepository.findAll().stream()
-                .map(AgencyMapper::convertToAgency)
+                .map(AgencyMapper::convertToDomain)
                 .collect(Collectors.toList());
     }
 
@@ -56,14 +56,15 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public void registerAgency(Agency agency) {
         AgencyJpaEntity entity = agency.toEntity();
+        String siteId = entity.chainSiteId();
         Optional<SiteInfoJpaEntity> foundSiteIdBySiteInfo = siteInfoRepository.findBySiteId(entity.getSiteId());
         Optional<AgencyJpaEntity> foundSiteIdByAgencyInfo = agencyRepository.findBySiteId(entity.getSiteId());
 
         // SiteId가 이미 존재하는 경우 DuplicateMemberException을 발생시킵니다.
         if (foundSiteIdBySiteInfo.isPresent() || foundSiteIdByAgencyInfo.isPresent()) {
-            throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
+            throw new DuplicateMemberException(EnumResultCode.DuplicateMember, siteId);
         }
-        entity.setSiteId(entity.getAgencyId() + "-" + entity.getSiteId());
+        entity.setSiteId(siteId);
         entity.setSiteStatus(EnumSiteStatus.PENDING.getCode());
         entity.setExtensionStatus(EnumExtensionStatus.DEFAULT.getCode());
         agencyRepository.save(entity);
@@ -73,7 +74,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public void updateAgency(Agency agency, String paymentStatus) {
         AgencyJpaEntity entity = agency.toEntity();
-        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        String siteId = entity.chainSiteId();
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
         if (optionalEntity.isPresent()) {
             AgencyJpaEntity searchedEntity = optionalEntity.get();
@@ -91,7 +92,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
                 searchedEntity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
             }
         } else {
-            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + entity.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + siteId + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 
@@ -99,13 +100,13 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public void updateAgencyExcessCount(Agency agency, int excessCount) {
         AgencyJpaEntity entity = agency.toEntity();
-        String siteId = entity.getAgencyId() + "-" + entity.getSiteId();
+        String siteId = entity.chainSiteId();
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), siteId);
         if (optionalEntity.isPresent()) {
             AgencyJpaEntity searchedEntity = optionalEntity.get();
             searchedEntity.setExcessCount(Integer.toString(excessCount));
         } else {
-            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + entity.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("optionalEntity : " + entity.getAgencyId() + ", " + siteId + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 }

@@ -16,9 +16,7 @@ import com.modules.payment.application.port.out.load.LoadPaymentDataPort;
 import com.modules.payment.application.port.out.load.LoadStatDataPort;
 import com.modules.payment.application.port.out.save.SaveAgencyDataPort;
 import com.modules.payment.application.port.out.save.SavePaymentDataPort;
-import com.modules.payment.domain.Agency;
-import com.modules.payment.domain.Payment;
-import com.modules.payment.domain.PaymentHistory;
+import com.modules.payment.domain.*;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +63,63 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         this.loadStatDataPort = loadStatDataPort;
         this.savePaymentDataPort = savePaymentDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
+    }
+
+
+    @Override
+    public String makeTradeNum() {
+        Random random = new Random();
+        int randomNum = random.nextInt(10000);
+        String formattedRandomNum = String.format("%04d", randomNum);
+        return "GY" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
+    }
+
+    @Override
+    public List<PaymentHistory> getPaymentHistoryByAgency(Agency agency) {
+        return loadPaymentDataPort.getPaymentHistoryByAgency(agency);
+    }
+
+    @Override
+    public Map<String, Integer> getExcessAmount(List<PaymentHistory> list) {
+        List<PaymentHistory> checkedList = list.stream()
+                .filter(PaymentHistory::isPassed)
+                .collect(Collectors.toList());
+
+        if (checkedList.size() < 2) {
+            return new HashMap<>();
+        }
+
+        PaymentHistory overPaymentTarget = checkedList.get(1);
+        String agencyId = overPaymentTarget.agencyId();
+        String billingBase = loadEncryptDataPort.getAgencyInfoKey(agencyId)
+                .map(AgencyInfoKey::billingBase)
+                .orElse(null);
+
+        if (agencyId == null) {
+            return new HashMap<>();
+        }
+        if (billingBase == null) {
+            return new HashMap<>();
+        }
+
+        List<StatDay> findStatDayList = getUseCountBySiteId(
+                overPaymentTarget.chainSiteId(),
+                overPaymentTarget.convertStartDate(),
+                overPaymentTarget.convertEndDate()
+        );
+
+        long useCountSum = getUseCount(billingBase, findStatDayList);
+        Product products = getAgencyProductByRateSel(overPaymentTarget.rateSel());
+        int calcExcessCount = overPaymentTarget.calculateExcessCount(useCountSum);
+
+        saveAgencyDataPort.updateAgencyExcessCount(new Agency("excess", agencyId, overPaymentTarget.chainSiteId()), calcExcessCount);
+        savePaymentDataPort.updatePaymentUseCount(overPaymentTarget, useCountSum);
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("excessCount", calcExcessCount);
+        result.put("excessAmount", calcExcessCount > 0 ? (int) (calcExcessCount * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0);
+
+        return result;
     }
 
 
@@ -232,13 +287,6 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         return params;
     }
 
-    @Override
-    public List<PaymentHistory> getPaymentHistoryByAgency(Agency agency) {
-        List<PaymentHistory> paymentHistories = loadPaymentDataPort.getPaymentHistoryByAgency(agency);
-        return paymentHistories.stream()
-                .map(this::convertClient)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String pgTradeNum) {
@@ -250,75 +298,16 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         return null;
     }
 
-    @Override
-    public String makeTradeNum() {
-        Random random = new Random();
-        int randomNum = random.nextInt(10000);
-        String formattedRandomNum = String.format("%04d", randomNum);
-        return "GY" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
-    }
 
     @Override
-    public AgencyProducts getAgencyProductByRateSel(String rateSel) {
-        return loadAgencyProductDataPort.getAgencyProductByRateSel(rateSel);
+    public Product getAgencyProductByRateSel(String rateSel) {
+        Optional<Product> productOptional = loadAgencyProductDataPort.getAgencyProductByRateSel(rateSel);
+        if (productOptional.isPresent()) {
+            return productOptional.get();
+        }
+        throw new NoSuchElementException("Product with rateSel: " + rateSel + " not found");
     }
 
-    @Override
-    public Map<String, Integer> getExcessAmount(List<PaymentHistory> list) {
-        SimpleDateFormat convertFormat = new SimpleDateFormat("yyyyMMdd");
-
-        List<PaymentHistory> checkedList = list.stream()
-                .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
-                .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
-                .collect(Collectors.toList());
-
-        if (checkedList.size() < 2) {
-            return new HashMap<>();
-        }
-
-        PaymentHistory overPaymentTarget = checkedList.get(1);
-        String agencyId = overPaymentTarget.getAgencyId();
-        String billingBase = loadEncryptDataPort.getAgencyInfoKey(agencyId)
-                .map(AgencyInfoKey::getBillingBase)
-                .orElse(null);
-
-        if (agencyId == null) {
-            return new HashMap<>();
-        }
-        if (billingBase == null) {
-            return new HashMap<>();
-        }
-
-        Date startDate = overPaymentTarget.getStartDate();
-        Date endDate = overPaymentTarget.getEndDate();
-
-        String convertedStartDate = convertFormat.format(startDate);
-        String convertedEndDate = convertFormat.format(endDate);
-
-        List<StatDay> findStatDayList = getUseCountBySiteId(
-                agencyId + "-" + overPaymentTarget.getSiteId(),
-                convertedStartDate,
-                convertedEndDate
-        );
-
-        long useCountSum = getUseCount(billingBase, findStatDayList);
-        System.out.println("useCountSum : " + useCountSum + ", startDate : " + convertedStartDate + ", endDate : " + convertedEndDate + ", billingBase : " + billingBase);
-
-
-        AgencyProducts products = getAgencyProductByRateSel(overPaymentTarget.getRateSel());
-        int offer = Integer.parseInt(overPaymentTarget.getOffer());
-        int excessCount = offer - (int) useCountSum;
-        int calcExcessCount = excessCount < 0 ? Math.abs(excessCount) : 0;
-
-        saveAgencyDataPort.updateAgencyExcessCount(new com.modules.payment.application.domain.Agency(agencyId, overPaymentTarget.getSiteId()), calcExcessCount);
-        savePaymentDataPort.updatePaymentUseCount(overPaymentTarget.getTradeNum(), overPaymentTarget.getPgTradeNum(), useCountSum);
-
-        Map<String, Integer> result = new HashMap<>();
-        result.put("excessCount", calcExcessCount);
-        result.put("excessAmount", calcExcessCount > 0 ? (int) (calcExcessCount * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0);
-
-        return result;
-    }
 
     @Override
     public Map<String, Integer> getExcessAmount(PaymentHistory paymentHistory) {
