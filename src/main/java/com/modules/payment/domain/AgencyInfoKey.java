@@ -1,8 +1,11 @@
 package com.modules.payment.domain;
 
 
+import lombok.Builder;
+
 import java.util.Date;
 
+@Builder
 public class AgencyInfoKey {
     private String agencyId;
     private String agencyName;

@@ -55,7 +55,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     @Transactional
     public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String pgTradeNum) {
         Optional<PaymentJpaEntity> entity = paymentHistoryRepository.findById(pgTradeNum);
-        return entity.map(this::convertToDomain);
+        return entity.map(PaymentHistoryMapper::convertToDomain);
     }
 
     @Override

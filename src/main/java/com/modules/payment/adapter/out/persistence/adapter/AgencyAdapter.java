@@ -46,6 +46,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     }
 
     @Override
+    @Transactional
     public List<Agency> selectAgencyInfo() {
         return agencyRepository.findAll().stream()
                 .map(AgencyMapper::convertToDomain)

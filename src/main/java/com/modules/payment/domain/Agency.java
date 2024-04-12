@@ -1,6 +1,5 @@
 package com.modules.payment.domain;
 
-import com.modules.payment.domain.entity.AgencyJpaEntity;
 import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.enums.EnumAgency;
 import com.modules.payment.application.enums.EnumExtensionStatus;
@@ -9,11 +8,14 @@ import com.modules.payment.application.exceptions.enums.EnumResultCode;
 import com.modules.payment.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.modules.payment.application.exceptions.exceptions.IllegalStatusException;
 import com.modules.payment.application.exceptions.exceptions.NoExtensionException;
+import com.modules.payment.application.exceptions.exceptions.ValueException;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.payment.application.utils.Utils;
+import com.modules.payment.domain.entity.AgencyJpaEntity;
 import lombok.Builder;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap.SimpleEntry;
@@ -34,6 +36,7 @@ public class Agency {
 
     private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_FORMATTER2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss");
 
     private String agencyId;
@@ -71,6 +74,7 @@ public class Agency {
 
     private String method;
     private String salesPrice;
+    private String offer;
 
 
     private boolean isValidAgencyId(String agencyId) {
@@ -347,6 +351,51 @@ public class Agency {
         }
         return this.rateSel;
     }
+
+
+    public void checkedParams(Product agencyProducts, double excessAmount) {
+        LocalDateTime yesterdays = LocalDateTime.now().minusDays(1);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        LocalDate startDateFormlocalDate = LocalDate.parse(sdf.format(this.startDate), DATE_FORMATTER2);
+
+        if (startDateFormlocalDate.isBefore(yesterdays.toLocalDate())) {
+            throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
+        }
+
+        String clientPrice = this.salesPrice;
+        String agencyId = this.agencyId;
+        String siteId = this.siteId;
+
+        int offer;
+        double price;
+        int clientOffer = Integer.parseInt(this.offer);
+        String clientEndDate = sdf.format(this.endDate);
+
+
+        int lastDate = startDateFormlocalDate.withDayOfMonth(startDateFormlocalDate.lengthOfMonth()).getDayOfMonth();
+        int startDate = startDateFormlocalDate.getDayOfMonth();
+
+        LocalDate endDate = LocalDate.now();
+
+        int durations = lastDate - startDate + 1;
+        int month = Integer.parseInt(agencyProducts.month());
+        if (month == 1) {
+            if (durations <= 14) {
+                endDate = endDate.plusMonths(month);
+            }
+        } else {
+            endDate = endDate.minusMonths(month - 1);
+        }
+
+        offer = agencyProducts.calculateOffer(lastDate, startDate);
+        price = agencyProducts.calculatePrice(lastDate, startDate);
+        price += excessAmount;
+
+        if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.format(DATE_FORMATTER2).equals(clientEndDate)) {
+            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate.format(DATE_FORMATTER2), clientEndDate, agencyId, siteId);
+        }
+    }
+
 
     public AgencyJpaEntity toEntity() {
         return AgencyJpaEntity.builder()
