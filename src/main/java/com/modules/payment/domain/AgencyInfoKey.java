@@ -21,4 +21,16 @@ public class AgencyInfoKey {
     public String billingBase() {
         return this.billingBase;
     }
+    public String agencyProductType() {
+        return this.agencyProductType;
+    }
+    public String agencyKey() {
+        return this.agencyKey;
+    }
+    public String agencyIv() {
+        return this.agencyIv;
+    }
+    public String agencyUrl() {
+        return this.agencyUrl;
+    }
 }

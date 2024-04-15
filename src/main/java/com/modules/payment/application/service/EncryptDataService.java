@@ -98,8 +98,8 @@ public class EncryptDataService implements EncryptUseCase {
         String AES_CBC_256_IV = "";
         if (agencyInfoKey.isPresent()) {
             AgencyInfoKey infoKey = agencyInfoKey.get();
-            AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyKey().trim());
-            AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyIv().trim());
+            AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyKey().trim());
+            AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyIv().trim());
         }
         Map<String, String> result = new HashMap<>();
         result.put("agencyKey", AES_CBC_256_KEY);

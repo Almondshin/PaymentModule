@@ -111,6 +111,11 @@ public class Agency {
         return this.agencyId;
     }
 
+    public String siteId() {
+        validateAgencyIdAndSiteId(agencyId, siteId);
+        return this.siteId;
+    }
+
     public String agencyEncryptData() {
         return this.encryptData;
     }

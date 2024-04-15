@@ -79,6 +79,11 @@ public class PaymentHistory {
         return this.tradeNum;
     }
 
+    public String pgTradeNum() {
+
+        return this.pgTradeNum;
+    }
+
     public Date endDate(){
         return this.endDate;
     }

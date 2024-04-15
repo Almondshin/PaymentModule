@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -118,7 +117,6 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
 
-
     @Override
     public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String pgTradeNum) {
         return loadPaymentDataPort.getPaymentHistoryByTradeNum(pgTradeNum);
@@ -157,6 +155,9 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             String targetUrl = makeTargetUrl(agency.agencyId(), "NotifyPaymentSiteInfo");
 
 
+            String agencyId = agency.agencyId();
+            String siteId = agency.siteId();
+
             if (getPaymentHistoryByTradeNum(paramsMap.get("trdNo")) == null) {
                 if ("0021".equals(paramsMap.get("outStatCd"))) {
                     byte[] decodeBase64 = PGUtils.decodeBase64(dataMap.get("trdAmt"));
@@ -182,15 +183,18 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
                     Date startDate = sdf.parse(sdf.format(startDateCal.getTime()));
                     Date endDate = sdf.parse(sdf.format(endDateCal.getTime()));
 
+                    HashMap<String, String> productMap = products.productMap();
+
+
                     PaymentHistory paymentHistory = PaymentHistory.builder()
                             .tradeNum(paramsMap.get("mchtTrdNo"))
                             .pgTradeNum(paramsMap.get("trdNo"))
                             .agencyId(agencyId)
                             .siteId(siteId)
                             .paymentType(paramsMap.get("method"))
-                            .rateSel(products.getRateSel())
+                            .rateSel(productMap.get("type"))
                             .amount(decryptedAmount)
-                            .offer(products.getOffer())
+                            .offer(productMap.get("offer"))
                             .trTrace(EnumTradeTrace.USED.getCode())
                             .paymentStatus(EnumPaymentStatus.ACTIVE.getCode())
                             .trDate(trDateAsDate)
@@ -208,7 +212,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
                     updateExtraAmountStatus(agencyId, siteId, paramsMap.get("method"));
 
                     Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, paramsMap.get("mchtTrdNo"));
-                    Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, products.getRateSel(), decryptedAmount);
+                    Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, productMap.get("type"), decryptedAmount);
 
                     //AdminNoti
                     System.out.println("어드민 결제 노티 완료 targetUrl : " + profileSpecificAdminUrl + ", Data : " + encryptDataService.mapToJSONString(jsonData));
@@ -266,9 +270,9 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     private void updateExtraAmountStatus(String agencyId, String siteId, String paymentType) {
-        List<com.modules.payment.application.domain.PaymentHistory> paymentHistoryList = loadPaymentDataPort.getPaymentHistoryByAgency(new com.modules.payment.application.domain.Agency(agencyId, siteId))
+        List<PaymentHistory> paymentHistoryList = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency("update", agencyId, siteId))
                 .stream()
-                .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                .filter(PaymentHistory::isPassed)
                 .collect(Collectors.toList());
         if (!paymentHistoryList.isEmpty() && paymentHistoryList.size() > 2) {
             savePaymentDataPort.updatePaymentExtraAmountStatus(paymentHistoryList.get(2));
@@ -314,7 +318,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
 
-    private String makeAgencyNotifyData(String agencyId, Map<String, String> notifyPaymentData) throws GeneralSecurityException {
+    private String makeAgencyNotifyData(String agencyId, Map<String, String> notifyPaymentData) {
         JSONObject json = new JSONObject();
         json.put("agencyId", agencyId);
         EnumAgency[] enumAgencies = EnumAgency.values();
@@ -324,41 +328,10 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
                 break;
             }
         }
-        json.put("encryptData", encryptDataService.encryptData(agencyId, encryptDataService.mapToJSONString(notifyPaymentData)));
+
+        json.put("encryptData", encryptDataService.encryptData(encryptDataService.mapToJSONString(notifyPaymentData), encryptDataService.getKeyIv(agencyId)));
         json.put("verifyInfo", encryptDataService.hmacSHA256(encryptDataService.mapToJSONString(notifyPaymentData), agencyId));
 
         return json.toString();
-    }
-
-    //TODO
-    // Mapper 클래스로 뺄 필요가 있는지 확인 (ClientSideDataModel [DTO] <-> Domain)
-    private PaymentHistory convertClient(com.modules.payment.application.domain.PaymentHistory paymentHistory) {
-        return new PaymentHistory(
-                paymentHistory.getTradeNum(),
-                paymentHistory.getPgTradeNum(),
-                paymentHistory.getAgencyId(),
-                paymentHistory.getSiteId(),
-                paymentHistory.getPaymentType(),
-                paymentHistory.getRateSel(),
-                paymentHistory.getAmount(),
-                paymentHistory.getOffer(),
-                paymentHistory.getUseCount(),
-                paymentHistory.getTrTrace(),
-                paymentHistory.getPaymentStatus(),
-                paymentHistory.getTrDate(),
-                paymentHistory.getStartDate(),
-                paymentHistory.getEndDate(),
-                paymentHistory.getRcptName(),
-                paymentHistory.getBillKey(),
-                paymentHistory.getBillKeyExpireDate(),
-                paymentHistory.getVbankName(),
-                paymentHistory.getVbankCode(),
-                paymentHistory.getVbankAccount(),
-                paymentHistory.getVbankExpireDate(),
-                paymentHistory.getRegDate(),
-                paymentHistory.getModDate(),
-                paymentHistory.getExtraAmountStatus(),
-                paymentHistory.getMemo()
-        );
     }
 }

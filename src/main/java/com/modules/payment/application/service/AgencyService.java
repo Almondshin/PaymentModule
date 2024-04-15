@@ -54,7 +54,7 @@ public class AgencyService implements AgencyUseCase {
 
         if (optAgencyInfoKey.isPresent()) {
             AgencyInfoKey agencyInfoKey = optAgencyInfoKey.get();
-            String[] productTypes = agencyInfoKey.getAgencyProductType().split(",");
+            String[] productTypes = agencyInfoKey.agencyProductType().split(",");
             System.out.println(Arrays.toString(productTypes));
             for (String productType : productTypes) {
                 Optional<Product> agencyProductsOpt = loadAgencyProductDataPort.getAgencyProductByRateSel(productType);

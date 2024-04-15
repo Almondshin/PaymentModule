@@ -3,9 +3,9 @@ package com.modules.payment.application.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.modules.payment.application.domain.AgencyInfoKey;
 import com.modules.payment.application.port.in.NotiUseCase;
 import com.modules.payment.application.port.out.load.LoadEncryptDataPort;
+import com.modules.payment.domain.AgencyInfoKey;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -84,7 +84,7 @@ public class NotiService implements NotiUseCase {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, String> agencyUrlJson = null;
             try {
-                agencyUrlJson = mapper.readValue(info.getAgencyUrl(), new TypeReference<>() {
+                agencyUrlJson = mapper.readValue(info.agencyUrl(), new TypeReference<>() {
                 });
                 return agencyUrlJson.get(type);
             } catch (JsonProcessingException e) {
