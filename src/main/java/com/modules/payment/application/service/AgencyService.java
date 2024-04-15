@@ -1,11 +1,5 @@
 package com.modules.payment.application.service;
 
-import com.modules.application.domain.model.*;
-import com.modules.domain.*;
-import com.modules.domain.model.*;
-import com.modules.payment.domain.Agency;
-import com.modules.payment.application.domain.AgencyInfoKey;
-import com.modules.payment.application.domain.AgencyProducts;
 import com.modules.payment.application.exceptions.enums.EnumResultCode;
 import com.modules.payment.application.exceptions.exceptions.NotFoundProductsException;
 import com.modules.payment.application.exceptions.exceptions.NullAgencyIdSiteIdException;
@@ -14,6 +8,9 @@ import com.modules.payment.application.port.out.load.LoadAgencyDataPort;
 import com.modules.payment.application.port.out.load.LoadAgencyProductDataPort;
 import com.modules.payment.application.port.out.load.LoadEncryptDataPort;
 import com.modules.payment.application.port.out.save.SaveAgencyDataPort;
+import com.modules.payment.domain.Agency;
+import com.modules.payment.domain.AgencyInfoKey;
+import com.modules.payment.domain.Product;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -34,20 +31,15 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void registerAgency(Agency agency) {
-        String nullField = agency.checkRequiredFields();
-        if (nullField != null) {
-            throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
-        }
-
-        saveAgencyDataPort.registerAgency(convertAgency(checkAgencyId), convertClient(agency), convertSettleManager(agency));
+        saveAgencyDataPort.registerAgency(agency);
     }
 
     @Override
     public Optional<Agency> getAgencyInfo(Agency agency) {
-        if (agency.getAgencyId() == null || agency.getAgencyId().isEmpty() || agency.getSiteId() == null || agency.getSiteId().isEmpty()) {
+        if (agency.validateIdFields()) {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
-        return loadAgencyDataPort.getAgencyInfo(convertAgency(agency), convertClient(agency));
+        return loadAgencyDataPort.getAgencyInfo(agency);
     }
 
     @Override
@@ -62,63 +54,17 @@ public class AgencyService implements AgencyUseCase {
 
         if (optAgencyInfoKey.isPresent()) {
             AgencyInfoKey agencyInfoKey = optAgencyInfoKey.get();
-            String[] productTypes = agencyInfoKey.getAgencyProductType().split(",");
+            String[] productTypes = agencyInfoKey.agencyProductType().split(",");
             System.out.println(Arrays.toString(productTypes));
             for (String productType : productTypes) {
-                Map<String, String> enumData = new HashMap<>();
-                AgencyProducts agencyProducts = loadAgencyProductDataPort.getAgencyProductByRateSel(productType);
-                if(agencyProducts == null){
-                    System.out.println("제휴사에 상품이 등록되지 않았습니다 : " +Arrays.toString(productTypes) + " 제휴사 관리 상품 리스트 확인 필요!");
-                    throw new NotFoundProductsException(EnumResultCode.ReadyProducts);
-                }
-                enumData.put("type", agencyProducts.getRateSel());
-                enumData.put("name", agencyProducts.getName());
-                enumData.put("price", agencyProducts.getPrice());
-                enumData.put("basicOffer", agencyProducts.getOffer());
-                enumData.put("month", agencyProducts.getMonth());
-                enumData.put("feePerCase", agencyProducts.getFeePerCase());
-                enumData.put("excessFeePerCase", agencyProducts.getExcessPerCase());
-                productsList.add(enumData);
+                Optional<Product> agencyProductsOpt = loadAgencyProductDataPort.getAgencyProductByRateSel(productType);
+                Product agencyProducts = agencyProductsOpt.orElseThrow(() -> {
+                    System.out.println("제휴사에 상품이 등록되지 않았습니다 : " + Arrays.toString(productTypes) + " 제휴사 관리 상품 리스트 확인 필요!");
+                    return new NotFoundProductsException(EnumResultCode.ReadyProducts);
+                });
+                productsList.add(agencyProducts.productMap());
             }
         }
         return productsList;
     }
-
-    private com.modules.payment.application.domain.Agency convertAgency(Agency agency) {
-        return new com.modules.payment.application.domain.Agency(agency.getAgencyId(), agency.getSiteId());
-    }
-//
-//    private Client convertClient(ClientDataContainer clientDataContainer) {
-//        return new Client(
-//                clientDataContainer.getSiteName(),
-//                clientDataContainer.getCompanyName(),
-//                clientDataContainer.getBusinessType(),
-//                clientDataContainer.getBizNumber(),
-//                clientDataContainer.getCeoName(),
-//                clientDataContainer.getPhoneNumber(),
-//                clientDataContainer.getAddress(),
-//                clientDataContainer.getCompanySite(),
-//                clientDataContainer.getEmail(),
-//                clientDataContainer.getRateSel(),
-//                clientDataContainer.getScheduledRateSel(),
-//                clientDataContainer.getSiteStatus(),
-//                clientDataContainer.getExtensionStatus(),
-//                clientDataContainer.getStartDate(),
-//                clientDataContainer.getEndDate(),
-//                clientDataContainer.getServiceUseAgree()
-//        );
-//    }
-//
-//    private SettleManager convertSettleManager(ClientDataContainer clientDataContainer) {
-//        return new SettleManager(
-//                clientDataContainer.getSettleManagerName(),
-//                clientDataContainer.getSettleManagerPhoneNumber(),
-//                clientDataContainer.getSettleManagerTelNumber(),
-//                clientDataContainer.getSettleManagerEmail()
-//        );
-//    }
-
-
-
-
 }

@@ -1,9 +1,10 @@
 package com.modules.payment.adapter.out.persistence.adapter;
 
-import com.modules.payment.adapter.out.persistence.entity.AgencyProductsJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.AgencyProductRepository;
-import com.modules.payment.application.domain.AgencyProducts;
+import com.modules.payment.application.mapper.ProductMapper;
 import com.modules.payment.application.port.out.load.LoadAgencyProductDataPort;
+import com.modules.payment.domain.Product;
+import com.modules.payment.domain.entity.AgencyProductsJpaEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,20 +21,10 @@ public class AgencyProductAdapter implements LoadAgencyProductDataPort {
 
     @Override
     @Transactional
-    public AgencyProducts getAgencyProductByRateSel(String rateSel) {
+    public Optional<Product> getAgencyProductByRateSel(String rateSel) {
         Optional<AgencyProductsJpaEntity> entity = agencyProductRepository.findByRateSel(rateSel);
-        return entity.map(this::convertDomain).orElse(null);
+        return entity.map(ProductMapper::convertToDomain);
     }
 
-    private AgencyProducts convertDomain(AgencyProductsJpaEntity entity) {
-        return AgencyProducts.builder()
-                .rateSel(entity.getRateSel())
-                .name(entity.getName())
-                .price(entity.getPrice())
-                .offer(entity.getOffer())
-                .month(entity.getMonth())
-                .feePerCase(entity.getFeePerCase())
-                .excessPerCase(entity.getExcessPerCase())
-                .build();
-    }
+
 }

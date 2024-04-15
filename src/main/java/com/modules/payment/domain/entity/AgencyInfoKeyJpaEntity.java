@@ -1,6 +1,9 @@
-package com.modules.payment.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,6 +13,9 @@ import java.util.Date;
 
 @Getter
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "AGENCY_INFO_KEY")
 public class AgencyInfoKeyJpaEntity {
 

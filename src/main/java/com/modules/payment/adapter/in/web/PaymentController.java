@@ -1,6 +1,8 @@
 package com.modules.payment.adapter.in.web;
 
 import com.modules.payment.application.enums.EnumExtensionStatus;
+import com.modules.payment.application.enums.EnumExtraAmountStatus;
+import com.modules.payment.application.enums.EnumTradeTrace;
 import com.modules.payment.application.exceptions.exceptions.IllegalStatusException;
 import com.modules.payment.application.port.in.AgencyUseCase;
 import com.modules.payment.application.port.in.PaymentUseCase;
@@ -110,7 +112,20 @@ public class PaymentController {
      */
     @PostMapping("/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody Agency agency) {
-        paymentUseCase.checkMchtParams(agency);
+        List<PaymentHistory> list = paymentUseCase.getPaymentHistoryByAgency(agency).stream()
+                .filter(PaymentHistory::isPassed)
+                .collect(Collectors.toList());
+
+        double excessAmount = 0;
+        if (list.size() > 2){
+            Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
+                    paymentUseCase.getPaymentHistoryByAgency(agency.checkedExtendable()));
+            excessAmount = excessMap.get("excessAmount");
+        }
+
+        Product product = paymentUseCase.getAgencyProductByRateSel(agency.rateSel(agency));
+        agency.checkedParams(product,excessAmount);
+
         String tradeNum = paymentUseCase.makeTradeNum();
         PGResponseManager manager = agency.pgResponseMsg(tradeNum);
         return ResponseEntity.ok(manager);

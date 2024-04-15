@@ -1,4 +1,4 @@
-package com.modules.payment.application.Config;
+package com.modules.payment.application.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

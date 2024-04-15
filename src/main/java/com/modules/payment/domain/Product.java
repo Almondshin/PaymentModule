@@ -1,5 +1,10 @@
 package com.modules.payment.domain;
 
+import lombok.Builder;
+
+import java.util.HashMap;
+
+@Builder
 public class Product {
     /* 결제 상품 */
     /*
@@ -20,7 +25,49 @@ public class Product {
     private String excessPerCase;
 
 
-    public String productName(){
+    public String productName() {
         return this.productName;
     }
+
+    public String excessPerCase(){
+        return this.excessPerCase;
+    }
+
+    public HashMap<String, String> productMap() {
+        HashMap<String, String> result = new HashMap<>();
+        result.put("type", this.productCode);
+        result.put("name", this.productName);
+        result.put("price", this.price);
+        result.put("basicOffer", this.offer);
+        result.put("month", this.month);
+        result.put("feePerCase", this.feePerCase);
+        result.put("excessPerCase", this.excessPerCase);
+        return result;
+    }
+
+    public int calculateOffer(int lastDate, int startDate) {
+        int durations = lastDate - startDate + 1;
+        int baseOffer = Integer.parseInt(this.offer) / Integer.parseInt(this.month);
+
+        if (durations <= 14) {
+            return (baseOffer) + (baseOffer * durations / lastDate);
+        }
+        return (baseOffer * durations / lastDate);
+    }
+
+    public double calculatePrice(int lastDate, int startDate) {
+        int durations = lastDate - startDate + 1;
+        int basePrice = Integer.parseInt(this.price) / Integer.parseInt(this.month);
+
+        if (durations <= 14){
+            return ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
+        }
+        return ((double) (basePrice * durations) / lastDate) + (basePrice * Integer.parseInt(this.month) - 1) * 1.1;
+    }
+
+    public String month() {
+        return this.month;
+    }
+
+
 }

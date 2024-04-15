@@ -1,7 +1,7 @@
 package com.modules.payment.domain;
 
 
-import com.modules.payment.application.Config.Constant;
+import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.pg.utils.EncryptUtil;
 

@@ -38,9 +38,8 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(UnregisteredAgencyException.class)
     public ResponseEntity<?> UnregisteredAgencyException(UnregisteredAgencyException ex) {
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.UnregisteredAgency.getCode(), EnumResultCode.UnregisteredAgency.getValue());
+        ResponseMessage responseMessage = new ResponseMessage(ex.getEnumResultCode().getCode(), ex.getEnumResultCode().getValue());
         logger.info("S ------------------------------[Exception] - [UnregisteredAgencyException] ------------------------------ S");
-        logger.info("[Exception siteId] : [" + ex.getSiteId() + "]");
         logger.info("[Exception ResultCode] : [" + responseMessage.getResultCode() + "]");
         logger.info("[Exception ResultMsg] : [" + responseMessage.getResultMsg() + "]");
         logger.info("E ------------------------------[Exception] - [UnregisteredAgencyException] ------------------------------ E");

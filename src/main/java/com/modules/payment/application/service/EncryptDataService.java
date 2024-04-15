@@ -3,9 +3,9 @@ package com.modules.payment.application.service;
 import com.dsmdb.japi.MagicDBAPI;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.payment.domain.Agency;
-import com.modules.payment.application.domain.AgencyInfoKey;
 import com.modules.payment.application.port.in.EncryptUseCase;
 import com.modules.payment.application.port.out.load.LoadEncryptDataPort;
+import com.modules.payment.domain.AgencyInfoKey;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -98,8 +98,8 @@ public class EncryptDataService implements EncryptUseCase {
         String AES_CBC_256_IV = "";
         if (agencyInfoKey.isPresent()) {
             AgencyInfoKey infoKey = agencyInfoKey.get();
-            AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyKey().trim());
-            AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyIv().trim());
+            AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyKey().trim());
+            AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyIv().trim());
         }
         Map<String, String> result = new HashMap<>();
         result.put("agencyKey", AES_CBC_256_KEY);

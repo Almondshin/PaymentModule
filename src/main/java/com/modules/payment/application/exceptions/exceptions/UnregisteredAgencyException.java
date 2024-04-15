@@ -5,9 +5,7 @@ import lombok.Getter;
 @Getter
 public class UnregisteredAgencyException extends RuntimeException {
     private final EnumResultCode enumResultCode;
-    private final String siteId;
-    public UnregisteredAgencyException(EnumResultCode enumResultCode, String siteId) {
+    public UnregisteredAgencyException(EnumResultCode enumResultCode) {
         this.enumResultCode = enumResultCode;
-        this.siteId = siteId;
     }
 }

@@ -28,6 +28,8 @@ public class AgencyController {
     private final EncryptUseCase encryptUseCase;
     private final NotiUseCase notiUseCase;
 
+    private static final String MSG_TYPE_ENCRYPT = "encrypt";
+
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
 
@@ -50,7 +52,7 @@ public class AgencyController {
 
         if (info.isPresent()) {
             Agency agencyInfo = info.get();
-            encryptMapData = agencyInfo.generateMapData("encrypt");
+            encryptMapData = agencyInfo.generateMapData(MSG_TYPE_ENCRYPT);
         }
 
         String keyString = agency.keyString();
@@ -67,6 +69,7 @@ public class AgencyController {
             String verifyInfo = encryptUseCase.hmacSHA256(Objects.requireNonNull(encryptStringData), keyString);
 
             verifiedHmacAndType(isVerifiedHmac, isVerifiedMsgType);
+
             ResponseManager manager = new ResponseManager("SiteInfo", encryptData, verifyInfo);
             return ResponseEntity.ok(manager);
         } catch (IllegalStateException e) {

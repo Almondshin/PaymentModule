@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LoadAgencyDataPort {
-    Optional<Agency> getAgencyInfo(com.modules.payment.application.domain.Agency agency, com.modules.payment.application.domain.Client client);
-
+    Optional<Agency> getAgencyInfo(Agency agency);
     List<Agency> selectAgencyInfo();
 }
 

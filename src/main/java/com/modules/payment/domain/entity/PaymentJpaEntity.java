@@ -1,6 +1,6 @@
-package com.modules.payment.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
-import lombok.Data;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,7 +11,10 @@ import java.util.Date;
 
 @Entity
 @Table(name = "AGENCY_PAYMENT_HISTORY")
-@Data
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 public class PaymentJpaEntity {
 
     @NotBlank

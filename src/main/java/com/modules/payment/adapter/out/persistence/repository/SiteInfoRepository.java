@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.repository;
 
-import com.modules.payment.adapter.out.persistence.entity.SiteInfoJpaEntity;
+import com.modules.payment.domain.entity.SiteInfoJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
