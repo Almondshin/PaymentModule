@@ -8,13 +8,15 @@ plugins {
     id 'war'
     id 'org.springframework.boot' version '2.7.17'
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.modules'
 version = '0.0.1-SNAPSHOT'
 
 //apply plugin: 'io.spring.dependency-management'
-apply plugin: "com.ewerk.gradle.plugins.querydsl"
+//apply plugin: "com.ewerk.gradle.plugins.querydsl"
+
 
 bootWar {
     enabled = false
@@ -24,7 +26,6 @@ bootWar {
 war {
     enabled = true
     archiveClassifier = ''
-//    archiveFileName = "eziok_admin"
 }
 
 java {
@@ -62,15 +63,13 @@ dependencies {
     implementation "com.querydsl:querydsl-apt"
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-//    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-//    providedRuntime 'ch.qos.logback:logback-core:1.4.12'
-//    providedRuntime 'ch.qos.logback:logback-classic:1.4.12'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
@@ -86,6 +85,13 @@ querydsl {
     library = "com.querydsl:querydsl-apt"
     jpa = true
     querydslSourcesDir = querydslDir
+}
+
+tasks.withType(JavaCompile) {
+    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+clean {
+    delete file(querydslDir)
 }
 sourceSets {
     main {

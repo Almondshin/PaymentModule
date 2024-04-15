@@ -100,7 +100,7 @@ public class PGDataContainer {
 
     private String pktHash(String trdDt, String trdTm, String mchtId) {
         Constant constant = new Constant();
-        String hashPlain = String.join("", trdDt, trdTm, mchtId, this.trdAmt, constant.LICENSE_KEY);
+        String hashPlain = String.join("", trdDt, trdTm, mchtId, this.trdAmt, constant.PAYMENT_LICENSE_KEY);
         try {
             return PGUtils.digestSHA256(hashPlain);
         } catch (Exception e) {
@@ -111,7 +111,7 @@ public class PGDataContainer {
     private String encodeAmount(String amount) {
         Constant constant = new Constant();
         try {
-            return Base64.getEncoder().encodeToString(PGUtils.aes256EncryptEcb(constant.AES256_KEY, amount));
+            return Base64.getEncoder().encodeToString(PGUtils.aes256EncryptEcb(constant.PAYMENT_AES256_KEY, amount));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

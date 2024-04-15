@@ -12,7 +12,9 @@ import com.modules.payment.application.exceptions.exceptions.ValueException;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.payment.application.utils.Utils;
 import com.modules.payment.domain.entity.AgencyJpaEntity;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -25,6 +27,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Agency {
 
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
@@ -120,8 +124,8 @@ public class Agency {
         return this.encryptData;
     }
 
-    public boolean isVerifiedHmac(String agencyKey, String agencyIv) {
-        return this.verifyInfo.equals(Utils.hmacSHA256(agencyKey, agencyIv, this.agencyId));
+    public boolean isVerifiedHmac(AgencyInfoKey agencyInfoKey) {
+        return this.verifyInfo.equals(Utils.hmacSHA256(agencyInfoKey, this.agencyId));
     }
 
     private boolean isValidRateSel() {
@@ -136,8 +140,8 @@ public class Agency {
                 .orElse("Error: Cannot get rateSel as it was not found");
     }
 
-    public Agency registerAgencyInfo(String agencyKey, String agencyIv) {
-        String registerInfo = new String(Utils.decryptData(agencyKey, agencyIv, this.encryptData));
+    public Agency registerAgencyInfo(AgencyInfoKey agencyInfoKey) {
+        String registerInfo = new String(Utils.decryptData(agencyInfoKey, this.encryptData));
         return Utils.jsonStringToObject(registerInfo, Agency.class);
     }
 
@@ -299,11 +303,11 @@ public class Agency {
         String merchantId;
         Constant constant = new Constant();
         if (this.method.equals("card") && this.rateSel.toLowerCase().contains("autopay")) {
-            merchantId = constant.PG_MID_AUTO;
+            merchantId = constant.PAYMENT_PG_MID_AUTO;
         } else if (this.method.equals("card")) {
-            merchantId = constant.PG_MID_CARD;
+            merchantId = constant.PAYMENT_PG_MID_CARD;
         } else {
-            merchantId = constant.PG_MID;
+            merchantId = constant.PAYMENT_PG_MID;
         }
         return merchantId;
     }
@@ -320,7 +324,7 @@ public class Agency {
         Constant constant = new Constant();
         String merchantId = selectMerchantId();
         String paymentType = this.method;
-        String hashPlain = String.join("", merchantId, paymentType, tradeNum, trdDt, trdTm, this.salesPrice, constant.LICENSE_KEY);
+        String hashPlain = String.join("", merchantId, paymentType, tradeNum, trdDt, trdTm, this.salesPrice, constant.PAYMENT_LICENSE_KEY);
         try {
             return PGUtils.digestSHA256(hashPlain);
         } catch (Exception e) {
@@ -333,7 +337,7 @@ public class Agency {
         HashMap<String, String> params = new HashMap<>();
         if (this.salesPrice != null && !this.salesPrice.isEmpty()) {
             try {
-                byte[] aesCipherRaw = PGUtils.aes256EncryptEcb(constant.AES256_KEY, this.salesPrice);
+                byte[] aesCipherRaw = PGUtils.aes256EncryptEcb(constant.PAYMENT_AES256_KEY, this.salesPrice);
                 String aesCipher = PGUtils.encodeBase64(aesCipherRaw);
                 params.put("trdAmt", aesCipher);
             } catch (Exception e) {

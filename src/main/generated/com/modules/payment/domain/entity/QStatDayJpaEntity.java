@@ -1,4 +1,4 @@
-package com.modules.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QStatDayJpaEntity extends EntityPathBase<StatDayJpaEntity> {
 
-    private static final long serialVersionUID = 1471651625L;
+    private static final long serialVersionUID = 407512243L;
 
     public static final QStatDayJpaEntity statDayJpaEntity = new QStatDayJpaEntity("statDayJpaEntity");
 

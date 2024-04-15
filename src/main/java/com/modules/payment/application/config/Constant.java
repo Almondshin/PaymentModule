@@ -8,14 +8,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "payment")
 public class Constant {
-    public String PG_MID;
-    public String PG_MID_CARD;
-    public String PG_MID_AUTO;
-    public String PG_CANCEL_MID_CARD;
-    public String PG_CANCEL_MID_AUTO;
-    public String LICENSE_KEY;
-    public String AES256_KEY;
-    public String BILL_SERVER_URL;
-    public int CONN_TIMEOUT;
-    public int READ_TIMEOUT;
+    public String PAYMENT_PG_MID;
+    public String PAYMENT_PG_MID_CARD;
+    public String PAYMENT_PG_MID_AUTO;
+    public String PAYMENT_PG_CANCEL_MID_CARD;
+    public String PAYMENT_PG_CANCEL_MID_AUTO;
+    public String PAYMENT_LICENSE_KEY;
+    public String PAYMENT_AES256_KEY;
+    public String PAYMENT_BILL_SERVER_URL;
+    public int PAYMENT_CONN_TIMEOUT;
+    public int PAYMENT_READ_TIMEOUT;
 }

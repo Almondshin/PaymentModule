@@ -2,6 +2,7 @@ package com.modules.payment.application.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.modules.payment.domain.AgencyInfoKey;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -34,13 +35,13 @@ public class Utils {
         }
     }
 
-    public static String hmacSHA256(String agencyKey, String agencyIv, String hmacKeyString) {
+    public static String hmacSHA256(AgencyInfoKey agencyInfoKey, String hmacKeyString) {
         // KEY + Message => Hash 생성
         // Hash Data (VerifyInfo) => Server
         // Server : EncryptData -> Decrypt ((KEY,AES) + IV) -> DecryptData
         // -> DecryptData + KEY -> Hash 생성 (calculatedHmac)
         // compare VerifyInfo(Hash Data), CalculatedHmac(Hash Data)
-        String target = new String(decryptData(agencyKey, agencyIv, hmacKeyString));
+        String target = new String(decryptData(agencyInfoKey, hmacKeyString));
 
         try {
             byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
@@ -55,9 +56,9 @@ public class Utils {
         }
     }
 
-    public static byte[] decryptData(String agencyKey, String agencyIv, String encryptData) {
-        byte[] key = Base64.getDecoder().decode(agencyKey);
-        byte[] iv = Base64.getDecoder().decode(agencyIv);
+    public static byte[] decryptData(AgencyInfoKey agencyInfoKey, String encryptData) {
+        byte[] key = agencyInfoKey.decodeKey();
+        byte[] iv = agencyInfoKey.decodeIv();
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
         try {

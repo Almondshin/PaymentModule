@@ -1,4 +1,4 @@
-package com.modules.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QAgencyInfoKeyJpaEntity extends EntityPathBase<AgencyInfoKeyJpaEntity> {
 
-    private static final long serialVersionUID = 893928197L;
+    private static final long serialVersionUID = -515966705L;
 
     public static final QAgencyInfoKeyJpaEntity agencyInfoKeyJpaEntity = new QAgencyInfoKeyJpaEntity("agencyInfoKeyJpaEntity");
 
@@ -24,6 +24,8 @@ public class QAgencyInfoKeyJpaEntity extends EntityPathBase<AgencyInfoKeyJpaEnti
     public final StringPath agencyIv = createString("agencyIv");
 
     public final StringPath agencyKey = createString("agencyKey");
+
+    public final StringPath agencyName = createString("agencyName");
 
     public final StringPath agencyProductType = createString("agencyProductType");
 
@@ -34,8 +36,6 @@ public class QAgencyInfoKeyJpaEntity extends EntityPathBase<AgencyInfoKeyJpaEnti
     public final DateTimePath<java.util.Date> modDate = createDateTime("modDate", java.util.Date.class);
 
     public final DateTimePath<java.util.Date> regDate = createDateTime("regDate", java.util.Date.class);
-
-    public final StringPath siteName = createString("siteName");
 
     public QAgencyInfoKeyJpaEntity(String variable) {
         super(AgencyInfoKeyJpaEntity.class, forVariable(variable));

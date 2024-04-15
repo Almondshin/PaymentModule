@@ -161,7 +161,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             if (getPaymentHistoryByTradeNum(paramsMap.get("trdNo")) == null) {
                 if ("0021".equals(paramsMap.get("outStatCd"))) {
                     byte[] decodeBase64 = PGUtils.decodeBase64(dataMap.get("trdAmt"));
-                    byte[] resultByte = PGUtils.aes256DecryptEcb(constant.AES256_KEY, decodeBase64);
+                    byte[] resultByte = PGUtils.aes256DecryptEcb(constant.PAYMENT_AES256_KEY, decodeBase64);
                     String decryptedAmount = new String(resultByte, "UTF-8");
 
                     DateTimeFormatter trdDtFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -329,7 +329,11 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             }
         }
 
-        json.put("encryptData", encryptDataService.encryptData(encryptDataService.mapToJSONString(notifyPaymentData), encryptDataService.getKeyIv(agencyId)));
+        //TODO
+        // keyIv 받는 것 변경 진행 중 Map<String, String> -> 객체
+        encryptDataService.getKeyIv(agencyId);
+        Map<String, String> test = new HashMap<>();
+        json.put("encryptData", encryptDataService.encryptData(encryptDataService.mapToJSONString(notifyPaymentData), test));
         json.put("verifyInfo", encryptDataService.hmacSHA256(encryptDataService.mapToJSONString(notifyPaymentData), agencyId));
 
         return json.toString();

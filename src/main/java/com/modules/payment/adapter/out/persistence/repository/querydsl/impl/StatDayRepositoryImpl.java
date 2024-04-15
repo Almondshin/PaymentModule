@@ -1,6 +1,6 @@
 package com.modules.payment.adapter.out.persistence.repository.querydsl.impl;
 
-import com.modules.adapter.out.persistence.entity.QStatDayJpaEntity;
+import com.modules.payment.domain.entity.QStatDayJpaEntity;
 import com.modules.payment.domain.entity.StatDayJpaEntity;
 import com.modules.payment.adapter.out.persistence.repository.querydsl.StatDayRepositoryQueryDSL;
 import com.querydsl.jpa.impl.JPAQueryFactory;

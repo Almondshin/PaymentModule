@@ -54,9 +54,9 @@ public class EncryptDataService implements EncryptUseCase {
      */
 
     @Override
-    public String encryptData(String targetEncode, Map<String,String> keyIv) {
-        byte[] key = Base64.getDecoder().decode(keyIv.get("agencyKey"));
-        byte[] iv = Base64.getDecoder().decode(keyIv.get("agencyIv"));
+    public String encryptData(String targetEncode, AgencyInfoKey agencyInfoKey) {
+        byte[] key = agencyInfoKey.decodeKey();
+        byte[] iv = agencyInfoKey.decodeIv();
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
         try {
@@ -77,7 +77,7 @@ public class EncryptDataService implements EncryptUseCase {
      * @return 복호화된 데이터 바이트 배열
      */
     @Override
-    public byte[] decryptData(Agency agency, Map<String,String> keyIv) {
+    public byte[] decryptData(Agency agency, Map<String, String> keyIv) {
         byte[] key = Base64.getDecoder().decode(keyIv.get("agencyKey"));
         byte[] iv = Base64.getDecoder().decode(keyIv.get("agencyIv"));
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
@@ -92,7 +92,7 @@ public class EncryptDataService implements EncryptUseCase {
     }
 
     @Override
-    public Map<String, String> getKeyIv(String agencyId) {
+    public AgencyInfoKey getKeyIv(String agencyId) {
         Optional<AgencyInfoKey> agencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
         String AES_CBC_256_KEY = "";
         String AES_CBC_256_IV = "";
@@ -101,13 +101,8 @@ public class EncryptDataService implements EncryptUseCase {
             AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyKey().trim());
             AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.agencyIv().trim());
         }
-        Map<String, String> result = new HashMap<>();
-        result.put("agencyKey", AES_CBC_256_KEY);
-        result.put("agencyIv", AES_CBC_256_IV);
-        return result;
+        return new AgencyInfoKey(AES_CBC_256_KEY, AES_CBC_256_IV);
     }
-
-
 
 
     /**

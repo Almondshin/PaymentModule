@@ -1,4 +1,4 @@
-package com.modules.adapter.out.persistence.entity;
+package com.modules.payment.domain.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -15,7 +15,7 @@ import com.querydsl.core.types.Path;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QPaymentJpaEntity extends EntityPathBase<PaymentJpaEntity> {
 
-    private static final long serialVersionUID = 1996688267L;
+    private static final long serialVersionUID = 932548885L;
 
     public static final QPaymentJpaEntity paymentJpaEntity = new QPaymentJpaEntity("paymentJpaEntity");
 
@@ -28,6 +28,8 @@ public class QPaymentJpaEntity extends EntityPathBase<PaymentJpaEntity> {
     public final StringPath billKeyExpireDate = createString("billKeyExpireDate");
 
     public final DateTimePath<java.util.Date> endDate = createDateTime("endDate", java.util.Date.class);
+
+    public final StringPath extraAmountStatus = createString("extraAmountStatus");
 
     public final StringPath memo = createString("memo");
 

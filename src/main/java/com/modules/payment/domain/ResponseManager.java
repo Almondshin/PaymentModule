@@ -24,10 +24,10 @@ public class ResponseManager {
     private String profilePaymentUrl;
     private List<Map<String, String>> listSel;
 
-    public ResponseManager(String type, String data, String verify) {
+    public ResponseManager(String msgType, String data, String verify) {
         this.resultCode = RESULT_CODE;
         this.resultMsg = RESULT_MESSAGE;
-        this.msgType = type;
+        this.msgType = msgType;
         this.encryptData = data;
         this.verifyInfo = verify;
     }

@@ -1,15 +1,13 @@
 package com.modules.payment.adapter.in.web;
 
+import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.enums.EnumExtensionStatus;
-import com.modules.payment.application.enums.EnumExtraAmountStatus;
-import com.modules.payment.application.enums.EnumTradeTrace;
 import com.modules.payment.application.exceptions.exceptions.IllegalStatusException;
 import com.modules.payment.application.port.in.AgencyUseCase;
 import com.modules.payment.application.port.in.PaymentUseCase;
 import com.modules.payment.application.utils.HttpClientUtil;
 import com.modules.payment.application.utils.Utils;
 import com.modules.payment.domain.*;
-import com.modules.pg.hectofinancial.Constant;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,11 +140,11 @@ public class PaymentController {
             Map<String, Object> requestData = new HashMap<>();
 
             String hashCipher = "";
-            String merchantId = constant.getPG_CANCEL_MID_CARD();
+            String merchantId = constant.getPAYMENT_PG_CANCEL_MID_CARD();
             String tradeNum = paymentUseCase.makeTradeNum();
 
             if (paymentHistory.isScheduledRateSel()) {
-                merchantId = constant.getPG_CANCEL_MID_AUTO();
+                merchantId = constant.getPAYMENT_PG_CANCEL_MID_AUTO();
             }
 
             String amount = paymentHistory.paymentAmount();
@@ -155,10 +153,10 @@ public class PaymentController {
 
             requestData.put("params", params);
             requestData.put("data", data);
-            String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
+            String url = constant.PAYMENT_BILL_SERVER_URL + "/spay/APICancel.do";
 
             try {
-                hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
+                hashCipher = params.makeHashCipher(constant.PAYMENT_LICENSE_KEY);
 
                 HttpClientUtil httpClientUtil = new HttpClientUtil();
                 String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
@@ -203,18 +201,18 @@ public class PaymentController {
                                 String billKey = paymentHistory.retrieveBillKey();
                                 String tradeNum = paymentUseCase.makeTradeNum();
 
-                                String merchantId = constant.PG_MID_AUTO;
+                                String merchantId = constant.PAYMENT_PG_MID_AUTO;
                                 String hashCipher = "";
 
                                 PGDataContainer params = paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", "", "");
                                 PGDataContainer data = paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount, productName);
 
                                 try {
-                                    hashCipher = params.makeHashCipher(constant.LICENSE_KEY);
+                                    hashCipher = params.makeHashCipher(constant.PAYMENT_LICENSE_KEY);
                                     Map<String, Object> responseData = new HashMap<>();
                                     responseData.put("params", params);
                                     responseData.put("data", data);
-                                    String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+                                    String url = constant.PAYMENT_BILL_SERVER_URL + "/spay/APICardActionPay.do";
                                     HttpClientUtil httpClientUtil = new HttpClientUtil();
                                     String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
                                     paymentUseCase.insertAutoPayPaymentHistory(info, paymentUseCase.getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic")), reqData);
