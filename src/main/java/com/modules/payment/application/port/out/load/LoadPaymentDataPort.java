@@ -9,5 +9,4 @@ import java.util.Optional;
 public interface LoadPaymentDataPort {
     List<PaymentHistory> getPaymentHistoryByAgency(Agency agency);
     Optional<PaymentHistory> getPaymentHistoryByTradeNum(String tradeNum);
-
 }

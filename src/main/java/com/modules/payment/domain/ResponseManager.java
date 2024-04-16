@@ -37,7 +37,7 @@ public class ResponseManager {
         this.resultMsg = msg;
     }
 
-    public ResponseManager(List<String> clientInfo, String rateSel, String startDate, String profileUrl, String profilePaymentUrl, List<Map<String, String>> listSel, boolean isExtendable, String extensionStatus, int excessCount, int excessAmount) {
+    public ResponseManager(List<String> clientInfo, String rateSel, String startDate, String profileUrl, String profilePaymentUrl, List<Map<String, String>> listSel) {
         this.resultCode = RESULT_CODE;
         this.resultMsg = RESULT_MESSAGE;
         this.clientInfo = clientInfo;
@@ -46,11 +46,19 @@ public class ResponseManager {
         this.profileUrl = profileUrl;
         this.profilePaymentUrl = profilePaymentUrl;
         this.listSel = listSel;
-        if (isExtendable) {
-            this.extensionStatus = extensionStatus;
-            this.excessCount = excessCount;
-            this.excessAmount = excessAmount;
-        }
     }
 
+    public ResponseManager(List<String> clientInfo, String rateSel, String startDate, String profileUrl, String profilePaymentUrl, List<Map<String, String>> listSel, String extensionStatus, int excessCount, int excessAmount) {
+        this.resultCode = RESULT_CODE;
+        this.resultMsg = RESULT_MESSAGE;
+        this.clientInfo = clientInfo;
+        this.rateSel = rateSel;
+        this.startDate = startDate;
+        this.profileUrl = profileUrl;
+        this.profilePaymentUrl = profilePaymentUrl;
+        this.listSel = listSel;
+        this.extensionStatus = extensionStatus;
+        this.excessCount = excessCount;
+        this.excessAmount = excessAmount;
+    }
 }

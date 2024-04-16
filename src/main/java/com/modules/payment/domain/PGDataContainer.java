@@ -45,8 +45,13 @@ public class PGDataContainer {
 
     private String pktHash;
 
-    public String makeHashCipher(String licenseKey) throws Exception {
-        return EncryptUtil.digestSHA256(this.trdDt + this.trdTm + this.mchtId + this.mchtTrdNo + this.trdAmt + licenseKey);
+    public String makeHashCipher(String licenseKey) {
+        try {
+            return EncryptUtil.digestSHA256(this.trdDt + this.trdTm + this.mchtId + this.mchtTrdNo + this.trdAmt + licenseKey);
+        } catch (Exception e) {
+            System.out.println("[" + this.mchtTrdNo + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+            throw new RuntimeException(e);
+        }
     }
 
 

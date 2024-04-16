@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
@@ -37,6 +38,12 @@ public class Agency {
     private static final String CANCEL = "cancel";
     private static final String EXTEND = "extend";
     private static final String EXCESS = "excess";
+
+
+    private static final String MSG_TYPE_CANCEL = "cancel";
+    private static final String MSG_TYPE_REGISTER = "reg";
+    private static final String MSG_TYPE_STATUS = "status";
+
 
     private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -75,6 +82,7 @@ public class Agency {
     private String serviceUseAgree;
     private String privateColAgree;
     private String thirdProvAgree;
+
 
     private String method;
     private String salesPrice;
@@ -132,7 +140,7 @@ public class Agency {
         return this.rateSel != null;
     }
 
-    public String rateSel(Agency searchedAgency) {
+    public String checkedRateSel(Agency searchedAgency) {
         return Stream.of(this, searchedAgency)
                 .filter(Agency::isValidRateSel)
                 .map(agency -> agency.rateSel)
@@ -145,7 +153,7 @@ public class Agency {
         return Utils.jsonStringToObject(registerInfo, Agency.class);
     }
 
-    public String startDate(Agency searchedAgency) {
+    public String checkedStartDate(Agency searchedAgency) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         EnumExtensionStatus extensionStatus = Arrays.stream(EnumExtensionStatus.values())
                 .filter(e -> this.extensionStatus.equals(e.getCode()))
@@ -174,44 +182,36 @@ public class Agency {
         }
     }
 
-
-    public boolean isVerifiedMessageType(String messageType) {
-        boolean isCancelType = messageType.equals("cancel");
-        boolean isRegType = messageType.equals("reg");
-        boolean isGetType = messageType.equals("status");
-
+    public boolean isVerifiedMessageType() {
         EnumAgency[] enumAgencies = EnumAgency.values();
         for (EnumAgency enumAgency : enumAgencies) {
             if (enumAgency.getCode().equals(keyString())) {
-                if (isCancelType) {
-                    return enumAgency.getCancelMsg().equals(messageType);
-                } else if (isRegType) {
-                    return enumAgency.getRegMsg().equals(messageType);
-                } else if (isGetType) {
-                    return enumAgency.getStatusMsg().equals(messageType);
+                switch (msgType) {
+                    case MSG_TYPE_CANCEL:
+                        return enumAgency.getCancelMsg().equals(msgType);
+                    case MSG_TYPE_REGISTER:
+                        return enumAgency.getRegMsg().equals(msgType);
+                    case MSG_TYPE_STATUS:
+                        return enumAgency.getStatusMsg().equals(msgType);
                 }
             }
         }
         return false;
     }
 
-    public Map<String, String> generateMapData(String mapType) {
-        validateAgencyIdAndSiteId(this.agencyId, this.siteId);
+    public String generateEncryptData(String type) {
         Map<String, String> dataMap = new HashMap<>();
+        dataMap.put("siteId", this.siteId);
+        dataMap.put("siteStatus", this.siteStatus);
+        return Utils.mapToJSONString(dataMap);
+    }
 
-        switch (mapType) {
-            case "encrypt":
-                dataMap.put("siteId", this.siteId);
-                dataMap.put("siteStatus", this.siteStatus);
-                break;
-            case "AdminNotification":
-                dataMap.put("agencyId", this.agencyId);
-                dataMap.put("siteId", this.siteId);
-                dataMap.put("siteName", this.siteName);
-                break;
-        }
-
-        return dataMap;
+    public String generateNotificationData(String target) {
+        Map<String, String> dataMap = new HashMap<>();
+        dataMap.put("agencyId", this.agencyId);
+        dataMap.put("siteId", this.siteId);
+        dataMap.put("siteName", this.siteName);
+        return Utils.mapToJSONString(dataMap);
     }
 
     public void validateRequiredValues() {
@@ -299,6 +299,13 @@ public class Agency {
         return List.of(this.companyName, this.bizNumber, this.ceoName);
     }
 
+    public PGResponseManager pgResponseMsg(String tradeNum) {
+        String trdDt = LOCAL_DATE_TIME.format(DATE_FORMATTER);
+        String trdTm = LOCAL_DATE_TIME.format(TIME_FORMATTER);
+        String hashCipher = hashCipher(tradeNum, trdDt, trdTm);
+        return new PGResponseManager(selectMerchantId(), this.method, tradeNum, this.salesPrice, trdDt, trdTm, hashCipher, encParams());
+    }
+
     private String selectMerchantId() {
         String merchantId;
         Constant constant = new Constant();
@@ -312,13 +319,6 @@ public class Agency {
         return merchantId;
     }
 
-
-    public PGResponseManager pgResponseMsg(String tradeNum) {
-        String trdDt = LOCAL_DATE_TIME.format(DATE_FORMATTER);
-        String trdTm = LOCAL_DATE_TIME.format(TIME_FORMATTER);
-        String hashCipher = hashCipher(tradeNum, trdDt, trdTm);
-        return new PGResponseManager(selectMerchantId(), this.method, tradeNum, this.salesPrice, trdDt, trdTm, hashCipher, encParams());
-    }
 
     private String hashCipher(String tradeNum, String trdDt, String trdTm) {
         Constant constant = new Constant();
@@ -362,7 +362,7 @@ public class Agency {
     }
 
 
-    public void checkedParams(Product agencyProducts, double excessAmount) {
+    public void checkedParams(double excessAmount, int offer, double price, int month) {
         LocalDateTime yesterdays = LocalDateTime.now().minusDays(1);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         LocalDate startDateFormlocalDate = LocalDate.parse(sdf.format(this.startDate), DATE_FORMATTER2);
@@ -375,19 +375,11 @@ public class Agency {
         String agencyId = this.agencyId;
         String siteId = this.siteId;
 
-        int offer;
-        double price;
         int clientOffer = Integer.parseInt(this.offer);
         String clientEndDate = sdf.format(this.endDate);
 
-
-        int lastDate = startDateFormlocalDate.withDayOfMonth(startDateFormlocalDate.lengthOfMonth()).getDayOfMonth();
-        int startDate = startDateFormlocalDate.getDayOfMonth();
-
         LocalDate endDate = LocalDate.now();
-
-        int durations = lastDate - startDate + 1;
-        int month = Integer.parseInt(agencyProducts.month());
+        int durations = intLastDate() - intStartDate() + 1;
         if (month == 1) {
             if (durations <= 14) {
                 endDate = endDate.plusMonths(month);
@@ -396,13 +388,21 @@ public class Agency {
             endDate = endDate.minusMonths(month - 1);
         }
 
-        offer = agencyProducts.calculateOffer(lastDate, startDate);
-        price = agencyProducts.calculatePrice(lastDate, startDate);
         price += excessAmount;
 
         if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.format(DATE_FORMATTER2).equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate.format(DATE_FORMATTER2), clientEndDate, agencyId, siteId);
         }
+    }
+
+    public int intLastDate() {
+        LocalDate startDateFormlocalDate = this.startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return startDateFormlocalDate.withDayOfMonth(startDateFormlocalDate.lengthOfMonth()).getDayOfMonth();
+    }
+
+    public int intStartDate() {
+        LocalDate startDateFormlocalDate = this.startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return startDateFormlocalDate.getDayOfMonth();
     }
 
 

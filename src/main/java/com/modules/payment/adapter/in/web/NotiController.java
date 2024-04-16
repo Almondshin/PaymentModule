@@ -3,6 +3,7 @@ package com.modules.payment.adapter.in.web;
 import com.modules.payment.application.port.in.EncryptUseCase;
 import com.modules.payment.application.port.in.NotiUseCase;
 import com.modules.payment.application.utils.Utils;
+import com.modules.payment.domain.AgencyInfoKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +34,7 @@ public class NotiController {
         final String agencyId = responseData.get("agencyId");
 
         final String plainData = encryptUseCase.mapToJSONString(responseData);
-        final Map<String, String> keyIv = encryptUseCase.getKeyIv(agencyId);
+        final AgencyInfoKey keyIv = encryptUseCase.getKeyIv(agencyId);
         final String encryptData = encryptUseCase.encryptData(plainData, keyIv);
         final String verifyInfo = encryptUseCase.hmacSHA256(plainData, agencyId);
 
