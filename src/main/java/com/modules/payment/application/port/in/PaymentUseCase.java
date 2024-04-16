@@ -18,4 +18,10 @@ public interface PaymentUseCase {
     Map<String, Integer> getExcessAmount(List<PaymentHistory> list);
     void insertAutoPayPaymentHistory(Agency agency, Product product,String reqData);
     String makeTargetUrl(String agencyId,  String msgType);
+
+    void processAgencyPayment(Agency info, List<PaymentHistory> paymentHistoryList);
+
+    String processPayment(Map<String, Object> requestData, String url);
+
+    Map<String, Object>  prepareCancelRequestData(PaymentHistory paymentHistory);
 }

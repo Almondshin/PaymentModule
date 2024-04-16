@@ -12,6 +12,7 @@ import com.modules.payment.application.port.out.load.LoadPaymentDataPort;
 import com.modules.payment.application.port.out.load.LoadStatDataPort;
 import com.modules.payment.application.port.out.save.SaveAgencyDataPort;
 import com.modules.payment.application.port.out.save.SavePaymentDataPort;
+import com.modules.payment.application.utils.HttpClientUtil;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.payment.domain.*;
 import net.sf.json.JSONObject;
@@ -269,6 +270,49 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         return "";
     }
 
+    @Override
+    public void processAgencyPayment(Agency info, List<PaymentHistory> paymentHistoryList) {
+        int excessAmount = 0;
+        if (paymentHistoryList.size() > 2) {
+            Map<String, Integer> excessMap = getExcessAmount(getPaymentHistoryByAgency(info.checkedExtendable()));
+            excessAmount = excessMap.get("excessAmount");
+        }
+
+        String productName = getAgencyProductByRateSel(info.selectRateSelBasedOnType("scheduled")).productName();
+        String merchantId = constant.PAYMENT_PG_MID_AUTO;
+        String tradeNum = makeTradeNum();
+
+        PaymentHistory paymentHistory = paymentHistoryList.get(0);
+        String billKey = paymentHistory.retrieveBillKey();
+        String amount = paymentHistory.paymentAmount() + excessAmount;
+
+        Map<String, Object> requestData = new HashMap<>();
+        requestData.put("params", paymentHistory.pgDataContainer("bill_params", merchantId, tradeNum, "", "", ""));
+        requestData.put("data", paymentHistory.pgDataContainer("bill_data", merchantId, tradeNum, billKey, amount, productName));
+
+        String responseData = processPayment(requestData, constant.PAYMENT_BILL_SERVER_URL + "/spay/APICardActionPay.do");
+        insertAutoPayPaymentHistory(info, getAgencyProductByRateSel(info.selectRateSelBasedOnType("basic")), responseData);
+    }
+
+    @Override
+    public String processPayment(Map<String, Object> requestData, String url) {
+        HttpClientUtil httpClientUtil = new HttpClientUtil();
+        String response = httpClientUtil.sendApi(url, requestData, 5000, 25000);
+        System.out.println(response);
+        return response;
+    }
+
+    @Override
+    public Map<String, Object> prepareCancelRequestData(PaymentHistory paymentHistory) {
+        Map<String, Object> requestData = new HashMap<>();
+        String merchantId = paymentHistory.isScheduledRateSel() ? constant.getPAYMENT_PG_CANCEL_MID_AUTO() : constant.getPAYMENT_PG_CANCEL_MID_CARD();
+        String amount = paymentHistory.paymentAmount();
+        String tradeNum = makeTradeNum();
+        requestData.put("params", new PGDataContainer("cancel_params", merchantId, tradeNum, amount));
+        requestData.put("data", new PGDataContainer("cancel_data", "", "", amount));
+        return requestData;
+    }
+
     private void updateExtraAmountStatus(String agencyId, String siteId, String paymentType) {
         List<PaymentHistory> paymentHistoryList = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency("update", agencyId, siteId))
                 .stream()
@@ -329,11 +373,8 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             }
         }
 
-        //TODO
-        // keyIv 받는 것 변경 진행 중 Map<String, String> -> 객체
-        encryptDataService.getKeyIv(agencyId);
-        Map<String, String> test = new HashMap<>();
-        json.put("encryptData", encryptDataService.encryptData(encryptDataService.mapToJSONString(notifyPaymentData), test));
+        AgencyInfoKey keyIv = encryptDataService.getKeyIv(agencyId);
+        json.put("encryptData", encryptDataService.encryptData(encryptDataService.mapToJSONString(notifyPaymentData), keyIv));
         json.put("verifyInfo", encryptDataService.hmacSHA256(encryptDataService.mapToJSONString(notifyPaymentData), agencyId));
 
         return json.toString();
