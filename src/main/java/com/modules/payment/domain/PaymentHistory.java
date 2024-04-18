@@ -9,6 +9,7 @@ import lombok.ToString;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 @ToString
 @AllArgsConstructor
@@ -50,85 +51,48 @@ public class PaymentHistory {
     private String extraAmountStatus;
     private String memo;
 
-
-    public boolean isPassed() {
-        return this.trTrace.equals(EnumTradeTrace.USED.getCode())
-                && this.extraAmountStatus.equals(EnumExtraAmountStatus.PASS.getCode());
+    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String billKey, String amount, String productName) {
+        return new PGDataContainer(type, mchtId, tradeNum, billKey, amount, productName);
     }
 
     public String agencyId() {
         return this.agencyId;
     }
-
-    public String retrieveBillKey() {
-        return this.billKey;
+    public String chainSiteId() {return this.agencyId + "-" + this.siteId;}
+    public String billKey() {return this.billKey;}
+    public String convertStartDate() {return FORMAT.format(this.startDate);}
+    public String convertEndDate() {return FORMAT.format(this.endDate);}
+    public String rateSel() {
+        return this.rateSel;
     }
-
-    public boolean isSameTradeNum(String tradeNum) {
-        return this.tradeNum.equals(tradeNum);
-    }
-
-    public boolean isScheduledRateSel() {
-        return this.rateSel.toLowerCase().contains("autopay");
-    }
-
     public String tradeNum() {
         if (!isValidData()) {
             throw new IllegalArgumentException("Invalid data : " + this.agencyId + ", " + this.siteId + ", " + this.tradeNum);
         }
         return this.tradeNum;
     }
+    public Date endDate() {return this.endDate;}
+    public String paymentAmount() {return this.amount;}
+    public String pgTradeNum() {return this.pgTradeNum;}
 
-    public String pgTradeNum() {
-
-        return this.pgTradeNum;
+    public boolean isScheduledRateSel() {
+        return this.rateSel.toLowerCase().contains("autopay");
     }
-
-    public Date endDate(){
-        return this.endDate;
+    public boolean isPassed() {
+        return this.trTrace.equals(EnumTradeTrace.USED.getCode())
+                && this.extraAmountStatus.equals(EnumExtraAmountStatus.PASS.getCode());
     }
-
-    public String paymentAmount() {
-        return this.amount;
-    }
-
-
     private boolean isValidData() {
         return this.agencyId != null && this.siteId != null && this.tradeNum != null;
     }
 
-    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String billKey, String amount, String productName) {
-        return new PGDataContainer(type, mchtId, tradeNum, billKey, amount, productName);
-    }
-
-    public PGDataContainer pgDataContainer(String type, String mchtId, String tradeNum, String amount) {
-        return new PGDataContainer(type, mchtId, tradeNum, amount);
-    }
-
-    public String chainSiteId(){
-        return this.agencyId + "-" + this.siteId;
-    }
-
-    public String convertStartDate(){
-        return FORMAT.format(this.startDate);
-    }
-
-    public String convertEndDate(){
-        return FORMAT.format(this.endDate);
-    }
-
-    public String rateSel() {
-        return this.rateSel;
-    }
-
-
-    public int calculateExcessCount(long useCount){
+    public int calculateExcessCount(long useCount) {
         int offer = Integer.parseInt(this.offer);
         int excessCount = offer - (int) useCount;
         return excessCount < 0 ? Math.abs(excessCount) : 0;
     }
 
-    public PaymentJpaEntity toEntity(){
+    public PaymentJpaEntity toEntity() {
         return PaymentJpaEntity.builder()
                 .tradeNum(this.tradeNum)
                 .pgTradeNum(this.pgTradeNum)

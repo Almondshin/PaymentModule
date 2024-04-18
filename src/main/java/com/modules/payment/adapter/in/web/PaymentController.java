@@ -5,6 +5,8 @@ import com.modules.payment.application.exceptions.exceptions.IllegalStatusExcept
 import com.modules.payment.application.port.in.AgencyUseCase;
 import com.modules.payment.application.port.in.PaymentUseCase;
 import com.modules.payment.domain.*;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping(value = {"/agency/payment", "/payment"})
+@RequiredArgsConstructor
 public class PaymentController {
 
     private final AgencyUseCase agencyUseCase;
@@ -32,11 +35,6 @@ public class PaymentController {
 
     @Value("${external.payment.url}")
     private String profileSpecificPaymentUrl;
-
-    public PaymentController(AgencyUseCase agencyUseCase, PaymentUseCase paymentUseCase) {
-        this.agencyUseCase = agencyUseCase;
-        this.paymentUseCase = paymentUseCase;
-    }
 
     /**
      * 결제 정보 요청

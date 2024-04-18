@@ -47,7 +47,7 @@ public class Agency {
 
     private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final DateTimeFormatter DATE_FORMATTER2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_HYPHEN_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss");
 
     private String agencyId;
@@ -365,7 +365,7 @@ public class Agency {
     public void checkedParams(double excessAmount, int offer, double price, int month) {
         LocalDateTime yesterdays = LocalDateTime.now().minusDays(1);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        LocalDate startDateFormlocalDate = LocalDate.parse(sdf.format(this.startDate), DATE_FORMATTER2);
+        LocalDate startDateFormlocalDate = LocalDate.parse(sdf.format(this.startDate), DATE_HYPHEN_FORMATTER);
 
         if (startDateFormlocalDate.isBefore(yesterdays.toLocalDate())) {
             throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
@@ -390,8 +390,8 @@ public class Agency {
 
         price += excessAmount;
 
-        if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.format(DATE_FORMATTER2).equals(clientEndDate)) {
-            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate.format(DATE_FORMATTER2), clientEndDate, agencyId, siteId);
+        if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.format(DATE_HYPHEN_FORMATTER).equals(clientEndDate)) {
+            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate.format(DATE_HYPHEN_FORMATTER), clientEndDate, agencyId, siteId);
         }
     }
 

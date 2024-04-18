@@ -10,7 +10,7 @@ import java.util.Arrays;
  */
 public class EncryptUtil {
 
-	public static void main(String[] args) throws Exception {
+	/*public static void main(String[] args) throws Exception {
 		byte[] encrypt = null;
 		byte[] decrypt = null;
 		String resultStr = null;
@@ -35,7 +35,7 @@ public class EncryptUtil {
 			System.out.println(e.toString());
 		}
 
-	}
+	}*/
 
 	// AES256 암호화 -> Base64 인코딩
 	public static String encryptParam(String aesKey, String plainText) throws Exception {
