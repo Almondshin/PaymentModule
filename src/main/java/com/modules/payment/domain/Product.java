@@ -33,6 +33,15 @@ public class Product {
         return this.excessPerCase;
     }
 
+    public String rateSel(){
+        return this.productCode;
+    }
+
+    public String baseOffer(){
+        return this.offer;
+    }
+
+
     public HashMap<String, String> productMap() {
         HashMap<String, String> result = new HashMap<>();
         result.put("type", this.productCode);

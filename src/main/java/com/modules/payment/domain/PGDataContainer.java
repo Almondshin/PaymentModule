@@ -5,9 +5,13 @@ import com.modules.payment.application.config.Constant;
 import com.modules.payment.application.utils.PGUtils;
 import com.modules.pg.utils.EncryptUtil;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.Date;
 
 public class PGDataContainer {
 
@@ -16,8 +20,8 @@ public class PGDataContainer {
     private static final String INSTMT_MON = "00";
     private static final String CRC_CD = "KRW";
     private static final String CRC_ORD = "001";
-    private static final LocalDateTime LOCAL_DATE_TIME = LocalDateTime.now();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_HYPHEN_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HHmmss");
 
 
@@ -44,6 +48,19 @@ public class PGDataContainer {
     private String cnclAmt;
 
     private String pktHash;
+
+
+    private String vldDtYear;
+    private String vldDtMon;
+
+    private String data;
+    private String params;
+    private String trdNo;
+
+    private String outStatCd;
+    private String outRsltCd;
+    private String outRsltMsg;
+
 
     public String makeHashCipher(String licenseKey) {
         try {
@@ -134,5 +151,64 @@ public class PGDataContainer {
         this.trdAmt = encodeAmount(trdAmt);
     }
 
+    public Date tradeDate() {
+         LocalDateTime trDate = LocalDateTime.parse(this.trdDt + this.trdTm, DATE_HYPHEN_FORMATTER);
+        Instant instant = trDate.atZone(ZoneId.systemDefault()).toInstant();
+        return Date.from(instant);
+    }
+
+    public String params() {
+        if(this.params == null) {
+            throw new NullPointerException("params is null");
+        }
+        return this.params;
+    }
+
+    public String data() {
+        if(this.data == null) {
+            throw new NullPointerException("data is null");
+        }
+        return this.data;
+    }
+
+    public String decryptedAmount() throws Exception {
+        Constant constant = new Constant();
+        byte[] decodeBase64 = PGUtils.decodeBase64(this.trdAmt);
+        byte[] resultByte = PGUtils.aes256DecryptEcb(constant.PAYMENT_AES256_KEY, decodeBase64);
+        return new String(resultByte, StandardCharsets.UTF_8);
+    }
+
+
+    public String billKeyExpireDate(){
+        return this.vldDtYear + this.vldDtMon;
+    }
+
+
+    public String tradeNum(){
+        return this.mchtTrdNo;
+    }
+
+    public String pgTradeNum(){
+        return this.trdNo;
+    }
+
+    public String paymentType(){
+        return this.method;
+    }
+
+    public String billKey(){
+        return this.billKey;
+    }
+
+    public String outStatusCode(){
+        return this.outStatCd;
+    }
+
+    public String failData(){
+        return "{\"outStatCd\":" + this.outStatCd + ","
+                + "\"outRsltCd\":" + this.outRsltCd + ","
+                + "\"outRsltMsg\":" + this.outRsltMsg + "}";
+
+    }
 
 }
