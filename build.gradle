@@ -8,15 +8,10 @@ plugins {
     id 'war'
     id 'org.springframework.boot' version '2.7.17'
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
-    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.modules'
 version = '0.0.1-SNAPSHOT'
-
-//apply plugin: 'io.spring.dependency-management'
-//apply plugin: "com.ewerk.gradle.plugins.querydsl"
-
 
 bootWar {
     enabled = false
@@ -54,13 +49,12 @@ dependencies {
     implementation 'org.jooq:jooq-meta:3.14.15'
     implementation 'org.jooq:jooq-codegen:3.14.15'
 
+    // hibernate-core
+    implementation 'org.hibernate:hibernate-core:5.6.12.Final'
+
+
     // jpa query logging
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.1'
-
-
-    // QueryDSL
-    implementation "com.querydsl:querydsl-jpa"
-    implementation "com.querydsl:querydsl-apt"
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
@@ -74,35 +68,3 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
-
-
-
-
-//querydsl 빌드 옵션 (선택)
-def querydslDir = 'src/main/generated'
-//def querydslDir = "$buildDir/generated/querydsl"
-querydsl {
-    library = "com.querydsl:querydsl-apt"
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
-
-tasks.withType(JavaCompile) {
-    options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
-}
-clean {
-    delete file(querydslDir)
-}
-sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java', querydslDir]
-        }
-    }
-}
-compileQuerydsl{
-    options.annotationProcessorPath = configurations.querydsl
-}
-configurations {
-    querydsl.extendsFrom compileClasspath
-}
