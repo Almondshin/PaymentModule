@@ -1,7 +1,8 @@
 package com.modules.link.domain.agency;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AgencyRepository extends JpaRepository<Agency, SiteId> {
+import com.modules.base.domain.Repository;
 
+public interface AgencyRepository extends Repository<Agency, SiteId> {
+    Agency find(SiteId siteId);
 }

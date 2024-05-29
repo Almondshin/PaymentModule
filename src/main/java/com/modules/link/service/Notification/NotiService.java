@@ -9,7 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-@Service("refactoringNotiService")
+@Service
 public class NotiService {
 
     public String sendNotification(String targetUrl, String responseData) {

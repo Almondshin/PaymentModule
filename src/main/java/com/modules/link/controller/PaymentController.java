@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController("refactoringPaymentController")
+@RestController
 @RequiredArgsConstructor
 @RequestMapping(value = {"/agency/payment", "/payment"})
 public class PaymentController {
@@ -30,7 +30,7 @@ public class PaymentController {
         receivedData.validData();
 
         AgencyKey agencyKey = agencyService.getAgencyKey(receivedData.getAgencyId());
-        Agency agency = agencyService.getAgency(SiteId.of(receivedData.getSiteId()));
+        Agency agency = agencyService.getAgencyBySiteId(SiteId.of(receivedData.getSiteId()));
 
         List<String> allProductRates = paymentService.findAll().stream().map(Products::getId).collect(Collectors.toList());
         List<String> commonProducts = agencyKey.getProductList(receivedData.getAgencyId())

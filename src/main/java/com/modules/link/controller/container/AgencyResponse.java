@@ -31,5 +31,10 @@ public class AgencyResponse {
         this.resultMsg = resultCode.getMessage();
     }
 
+    public AgencyResponse(String code, String message) {
+        this.resultCode = code;
+        this.resultMsg = message;
+    }
+
 
 }

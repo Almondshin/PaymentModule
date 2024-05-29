@@ -14,7 +14,8 @@ public enum EnumResultCode {
     RejectAgency("3499", "심사 반려된 가맹점입니다."),
     SuspendedSiteId("4999", "이용정지된 사이트 아이디입니다."),
     HmacError("9100", "HMAC 검증에 실패하였습니다."),
-    MsgTypeError("9200", "MsgType 검증이 실패하였습니다.");
+    MsgTypeError("9200", "MsgType 검증이 실패하였습니다."),
+    NoSuchFieldError("9999", " 필드가 비어 있습니다.");
 
     private final String code;
     private final String message;

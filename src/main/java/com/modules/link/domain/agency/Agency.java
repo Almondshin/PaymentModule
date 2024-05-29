@@ -3,13 +3,13 @@ package com.modules.link.domain.agency;
 import com.modules.base.domain.AggregateRoot;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.modules.link.enums.EnumExtensionStatus;
+import com.modules.link.enums.EnumSiteStatus;
 import lombok.Getter;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
@@ -18,7 +18,8 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Table(name = "AGENCY_INFO")
 public class Agency extends AggregateRoot<Agency, SiteId> {
 
-    private static final String STATUS_TYPE = "status";
+    public static final String SITE_INFO = "info";
+    public static final String STATUS_TYPE = "status";
     private static final String REGISTER_TYPE = "reg";
     private static final String CANCEL_TYPE = "cancel";
 
@@ -28,56 +29,39 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     @Column(name = "SITE_ID")
     private SiteId id;
 
+    @Type(type = "com.modules.link.domain.agency.AgencyId$AgencyIdJavaType")
     @Column(name = "AGENCY_ID")
-    private String agencyId;
+    private AgencyId agencyId;
 
-    @Column(name = "SITE_NAME")
-    private String siteName;
-    @Column(name = "COMPANY_NAME")
-    private String companyName;
-    @Column(name = "BUSINESS_TYPE")
-    private String businessType;
-
-    @Column(name = "BIZ_NUMBER")
-    private String bizNumber;
-    @Column(name = "CEO_NAME")
-    private String ceoName;
-    @Column(name = "PHONE_NUMBER")
-    private String phoneNumber;
-    @Column(name = "ADDRESS")
-    private String address;
-    @Column(name = "COMPANY_SITE")
-    private String companySite;
-    @Column(name = "EMAIL")
-    private String email;
-    @Column(name = "RATE_SEL")
-    private String rateSel;
-    @Column(name = "SCHEDULED_RATE_SEL")
-    private String scheduledRateSel;
     @Column(name = "SITE_STATUS")
-    private String siteStatus;
+    private String agencyStatus;
 
     @Column(name = "EXTENSION_STATUS")
     private String extensionStatus;
-    @Column(name = "EXCESS_COUNT")
-    private String excessCount;
 
-    @Column(name = "START_DATE")
-    private Date startDate;
-    @Column(name = "END_DATE")
-    private Date endDate;
+    @Embedded
+    private Company company;
 
-    @Column(name = "SETTLE_MANAGER_NAME")
-    private String settleManagerName;
-    @Column(name = "SETTLE_MANAGER_PHONE_NUMBER")
-    private String settleManagerPhoneNumber;
-    @Column(name = "SETTLE_MANAGER_TEL_NUMBER")
-    private String settleManagerTelNumber;
-    @Column(name = "SETTLE_MANAGER_EMAIL")
-    private String settleManagerEmail;
+    @Embedded
+    private AgencyPaymentInfo agencyPaymentInfo;
 
-    @Column(name = "SERVICE_USE_AGREE")
-    private String serviceUseAgree;
+    @Embedded
+    private Manager manager;
+
+    private void addSite(Agency agency, Site site) {
+        if(agency != null) {
+            throw new IllegalArgumentException("Agency already exists");
+        }
+
+        if (site != null){
+            throw new IllegalArgumentException("Site already exists");
+        }
+
+        if (!site.isAvailable()){
+            throw new IllegalArgumentException("사이트는 사용중이여야 합니다.");
+        }
+
+    }
 
     public String makeVerifyAndEncryptData(String type) {
         ObjectMapper mapper = new ObjectMapper();
@@ -86,16 +70,17 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
             switch (type) {
                 case STATUS_TYPE: {
                     map.put("siteId", this.id.toString());
-                    map.put("agencyId", this.agencyId);
+                    map.put("siteStatus", this.agencyStatus);
+                    System.out.println("SITE STATUS MAP " + map);
                     return mapper.writeValueAsString(map);
                 }
-                case REGISTER_TYPE:{
+                case REGISTER_TYPE: {
                     return mapper.writeValueAsString(this);
                 }
-                case CANCEL_TYPE:{
+                case CANCEL_TYPE: {
                     map.put("agencyId", this.agencyId);
                     map.put("siteId", this.id.toString());
-                    map.put("siteName", this.siteName);
+                    map.put("siteName", this.company.getSiteName());
                     return mapper.writeValueAsString(map);
                 }
             }
@@ -105,29 +90,17 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
         }
     }
 
-
-    public static Agency of(SiteId id, String agencyId, String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, Date startDate,  String settleManagerName, String settleManagerPhoneNumber, String settleManagerTelNumber, String settleManagerEmail, String serviceUseAgree) {
+    public static Agency of(SiteId siteId, String agencyId, Company company, Manager manager) {
         Agency agency = new Agency();
-        agency.id = id;
+        // 여기에서 Company, AgencyPaymentInfo, Manager를 설정
+        agency.id = siteId;
         agency.agencyId = agencyId;
-        agency.siteName = siteName;
-        agency.companyName = companyName;
-        agency.businessType = businessType;
-        agency.bizNumber = bizNumber;
-        agency.ceoName = ceoName;
-        agency.phoneNumber = phoneNumber;
-        agency.address = address;
-        agency.companySite = companySite;
-        agency.email = email;
-        agency.rateSel = rateSel;
-        agency.startDate = startDate;
-        agency.settleManagerName = settleManagerName;
-        agency.settleManagerPhoneNumber = settleManagerPhoneNumber;
-        agency.settleManagerTelNumber = settleManagerTelNumber;
-        agency.settleManagerEmail = settleManagerEmail;
-        agency.serviceUseAgree = serviceUseAgree;
+        agency.agencyStatus = EnumSiteStatus.PENDING.getCode();
+        agency.extensionStatus = EnumExtensionStatus.DEFAULT.getCode();
+        agency.company = company;
+        agency.manager = manager;
+
         return agency;
     }
-
 
 }

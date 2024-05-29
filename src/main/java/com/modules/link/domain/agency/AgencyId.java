@@ -7,12 +7,12 @@ import com.modules.base.jpa.hibernate.StringTypeIdentifierJavaType;
 import java.io.Serializable;
 
 @JsonSerialize(using = SiteIdSerializer.class)
-public class SiteId extends StringTypeIdentifier implements Serializable {
-    public static SiteId of(String id) {
-        return new SiteId(id);
+public class AgencyId extends StringTypeIdentifier implements Serializable {
+    public static AgencyId of(String id) {
+        return new AgencyId(id);
     }
 
-    public SiteId(String id) {
+    public AgencyId(String id) {
         super(id);
     }
 
@@ -21,9 +21,9 @@ public class SiteId extends StringTypeIdentifier implements Serializable {
         return stringValue();
     }
 
-    public static class SiteIdJavaType extends StringTypeIdentifierJavaType<SiteId> {
-        public SiteIdJavaType() {
-            super(SiteId.class);
+    public static class AgencyIdJavaType extends StringTypeIdentifierJavaType<AgencyId> {
+        public AgencyIdJavaType() {
+            super(AgencyId.class);
         }
     }
 
