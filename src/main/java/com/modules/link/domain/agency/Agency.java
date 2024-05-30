@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumSiteStatus;
 import lombok.Getter;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -15,6 +16,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Getter
+@ToString
 @Table(name = "AGENCY_INFO")
 public class Agency extends AggregateRoot<Agency, SiteId> {
 

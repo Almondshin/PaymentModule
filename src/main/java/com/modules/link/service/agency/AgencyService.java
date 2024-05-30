@@ -41,6 +41,8 @@ public class AgencyService {
         String encryptedData = agencyDomainService.encryptData(agencyKey, targetDate);
         String hmac = agencyDomainService.generateHmac(agencyKey, targetDate);
 
+        System.out.println("new AgencyResponse(encryptedData, hmac, messageType) : " + new AgencyResponse(encryptedData, hmac, messageType));
+
         return new AgencyResponse(encryptedData, hmac, messageType);
     }
 

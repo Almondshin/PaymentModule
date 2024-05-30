@@ -5,5 +5,4 @@ import com.modules.link.domain.agency.AgencyId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AgencyKeyJpaRepository extends JpaRepository<AgencyKey, AgencyId> {
-    AgencyKey findByAgencyId(AgencyId agencyId);
 }
