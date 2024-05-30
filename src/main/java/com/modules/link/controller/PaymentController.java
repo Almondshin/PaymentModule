@@ -1,6 +1,5 @@
 package com.modules.link.controller;
 
-import com.modules.link.controller.container.AgencyResponse;
 import com.modules.link.controller.container.PaymentReceived;
 import com.modules.link.domain.agency.Agency;
 import com.modules.link.domain.agency.AgencyId;
@@ -8,6 +7,7 @@ import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.domain.agency.SiteId;
 import com.modules.link.domain.payment.Products;
 import com.modules.link.enums.EnumResultCode;
+import com.modules.link.service.agency.AgencyDtos;
 import com.modules.link.service.agency.AgencyService;
 import com.modules.link.service.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +27,11 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/getPaymentInfo")
-    public ApiResponse<AgencyResponse> getPaymentInfo(@RequestBody PaymentReceived receivedData) {
+    public ApiResponse<AgencyDtos.AgencyResponse> getPaymentInfo(@RequestBody PaymentReceived receivedData) {
         receivedData.validData();
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
-        Agency agency = agencyService.getAgencyBySiteId(SiteId.of(receivedData.getSiteId()));
+        Agency agency = agencyService.getAgency(SiteId.of(receivedData.getSiteId()));
 
         List<String> allProductRates = paymentService.findAll().stream().map(Products::getId).collect(Collectors.toList());
         List<String> commonProducts = agencyKey.getProductList(receivedData.getAgencyId())
@@ -42,7 +42,7 @@ public class PaymentController {
 
 
 
-        return ApiResponse.success(new AgencyResponse(EnumResultCode.SUCCESS));
+        return ApiResponse.success(new AgencyDtos.AgencyResponse(EnumResultCode.SUCCESS));
     }
 
 

@@ -1,4 +1,4 @@
-package com.modules.link.service.Notification;
+package com.modules.link.service.notification;
 
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 @Service
-public class NotiService {
+public class NotifyService {
 
     public String sendNotification(String targetUrl, String responseData) {
         try {
