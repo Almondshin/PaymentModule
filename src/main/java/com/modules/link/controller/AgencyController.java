@@ -41,7 +41,7 @@ public class AgencyController {
     public ResponseEntity<?> save(@Valid @RequestBody AgencyReceived receivedData, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             String missingField = Objects.requireNonNull(bindingResult.getFieldError()).getDefaultMessage();
-            return ResponseEntity.ok(new AgencyDtos.AgencyResponse(EnumResultCode.NoSuchFieldError.getCode(), missingField + EnumResultCode.NoSuchFieldError.getMessage()));
+            return new AgencyDtos.AgencyResponse(EnumResultCode.NoSuchFieldError.getCode(), missingField + EnumResultCode.NoSuchFieldError.getMessage()));
         }
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
@@ -53,6 +53,7 @@ public class AgencyController {
                         .map(AgencyDtos.AgencyResponse::new)
                         .orElseGet(() -> agencyService.registerNewAgency(agencyKey, receivedData)));
     }
+
 
     @PostMapping("/cancelSiteInfo")
     public ResponseEntity<AgencyDtos.AgencyResponse> cancel(@RequestBody AgencyReceived receivedData) {
