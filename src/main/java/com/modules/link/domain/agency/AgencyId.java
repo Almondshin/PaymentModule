@@ -6,7 +6,7 @@ import com.modules.base.jpa.hibernate.StringTypeIdentifierJavaType;
 
 import java.io.Serializable;
 
-@JsonSerialize(using = SiteIdSerializer.class)
+@JsonSerialize(using = AgencyIdSerializer.class)
 public class AgencyId extends StringTypeIdentifier implements Serializable {
     public static AgencyId of(String id) {
         return new AgencyId(id);

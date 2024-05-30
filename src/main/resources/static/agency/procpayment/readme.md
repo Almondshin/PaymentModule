@@ -30,7 +30,7 @@ payment.setText("info", "companyName", "1");
 getValue & getText
 // 사용자가 입력한 값을 가져오거나, 텍스트값을 반환할때 사용
 예시)
-requestService1.getValue("manager", "name")
+requestService1.getValue("agencyManager", "name")
 
 disableContainer
 // 특정 컨테이너를 안보이도록 할때 사용

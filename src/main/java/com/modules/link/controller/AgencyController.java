@@ -3,6 +3,7 @@ package com.modules.link.controller;
 import com.modules.link.controller.container.AgencyReceived;
 import com.modules.link.controller.container.AgencyResponse;
 import com.modules.link.domain.agency.*;
+import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.enums.EnumAgency;
 import com.modules.link.enums.EnumResultCode;
 import com.modules.link.service.Notification.NotiService;
@@ -41,7 +42,8 @@ public class AgencyController {
 
     @PostMapping("/getSiteStatus")
     public ResponseEntity<AgencyResponse> getStatus(@RequestBody AgencyReceived receivedData) {
-        AgencyKey agencyKey = agencyService.getAgencyKey(receivedData.getAgencyId());
+        AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
+        AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(
                 agencyKey.validateHmacAndMsgType(
                                 receivedData.getMsgType(),
@@ -59,7 +61,8 @@ public class AgencyController {
 //            throw new ResponseStatusException(HttpStatus.OK, missingField + " 필드가 비어 있습니다.");
             return ResponseEntity.ok(new AgencyResponse(EnumResultCode.NoSuchFieldError.getCode(), missingField + EnumResultCode.NoSuchFieldError.getMessage()));
         }
-        AgencyKey agencyKey = agencyService.getAgencyKey(receivedData.getAgencyId());
+        AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
+        AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(
                 agencyKey.validateHmacAndMsgType(
                                 receivedData.getMsgType(),
@@ -85,7 +88,7 @@ public class AgencyController {
         @NotNull(message = "siteId")
         private SiteId siteId;
         @NotNull(message = "agencyId")
-        private String agencyId;
+        private AgencyId agencyId;
         @NotNull(message = "siteName")
         private String siteName;
         @NotNull(message = "companyName")
@@ -120,7 +123,7 @@ public class AgencyController {
             return Agency.of(
                     this.siteId,
                     this.agencyId,
-                    Company.builder()
+                    AgencyCompany.builder()
                             .siteName(this.siteName)
                             .companyName(this.companyName)
                             .businessType(this.businessType)
@@ -131,7 +134,7 @@ public class AgencyController {
                             .email(this.email)
                             .serviceUseAgree(this.serviceUseAgree)
                             .build(),
-                    Manager.builder()
+                    AgencyManager.builder()
                             .name(this.settleManagerName)
                             .telNumber(this.settleManagerTelNumber)
                             .email(this.settleManagerEmail)
@@ -143,7 +146,8 @@ public class AgencyController {
 
     @PostMapping("/cancelSiteInfo")
     public ResponseEntity<AgencyResponse> cancel(@RequestBody AgencyReceived receivedData) {
-        AgencyKey agencyKey = agencyService.getAgencyKey(receivedData.getAgencyId());
+        AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
+        AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(
                 agencyKey.validateHmacAndMsgType(
                                 receivedData.getMsgType(),

@@ -9,7 +9,7 @@ import javax.persistence.Embeddable;
 
 @Embeddable
 @NoArgsConstructor
-public class Manager extends ValueObject<Manager> {
+public class AgencyManager extends ValueObject<AgencyManager> {
     @Column(name = "SETTLE_MANAGER_NAME")
     private String name;
 
@@ -26,7 +26,7 @@ public class Manager extends ValueObject<Manager> {
     protected Object[] getEqualityFields() { return new Object[] {name, phoneNumber, telNumber, email}; }
 
     @Builder
-    public Manager(String name, String phoneNumber, String telNumber, String email) {
+    public AgencyManager(String name, String phoneNumber, String telNumber, String email) {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.telNumber = telNumber;

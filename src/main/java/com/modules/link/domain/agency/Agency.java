@@ -40,13 +40,23 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     private String extensionStatus;
 
     @Embedded
-    private Company company;
+    private AgencyCompany agencyCompany;
 
     @Embedded
-    private AgencyPaymentInfo agencyPaymentInfo;
+    private AgencyPayment agencyPayment;
 
     @Embedded
-    private Manager manager;
+    private AgencyManager agencyManager;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
+    private Site site;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
+    private AgencyKey agencyKey;
+
+
 
     private void addSite(Agency agency, Site site) {
         if(agency != null) {
@@ -78,9 +88,9 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
                     return mapper.writeValueAsString(this);
                 }
                 case CANCEL_TYPE: {
-                    map.put("agencyId", this.agencyId);
+                    map.put("agencyId", this.agencyId.toString());
                     map.put("siteId", this.id.toString());
-                    map.put("siteName", this.company.getSiteName());
+                    map.put("siteName", this.agencyCompany.getSiteName());
                     return mapper.writeValueAsString(map);
                 }
             }
@@ -90,15 +100,15 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
         }
     }
 
-    public static Agency of(SiteId siteId, String agencyId, Company company, Manager manager) {
+    public static Agency of(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
         Agency agency = new Agency();
-        // 여기에서 Company, AgencyPaymentInfo, Manager를 설정
+        // 여기에서 AgencyCompany, AgencyPayment, Manager를 설정
         agency.id = siteId;
         agency.agencyId = agencyId;
         agency.agencyStatus = EnumSiteStatus.PENDING.getCode();
         agency.extensionStatus = EnumExtensionStatus.DEFAULT.getCode();
-        agency.company = company;
-        agency.manager = manager;
+        agency.agencyCompany = agencyCompany;
+        agency.agencyManager = agencyManager;
 
         return agency;
     }

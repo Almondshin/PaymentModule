@@ -3,6 +3,7 @@ package com.modules.link.controller;
 import com.modules.link.controller.container.AgencyResponse;
 import com.modules.link.controller.container.PaymentReceived;
 import com.modules.link.domain.agency.Agency;
+import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.domain.agency.SiteId;
 import com.modules.link.domain.payment.Products;
@@ -28,8 +29,8 @@ public class PaymentController {
     @PostMapping("/getPaymentInfo")
     public ApiResponse<AgencyResponse> getPaymentInfo(@RequestBody PaymentReceived receivedData) {
         receivedData.validData();
-
-        AgencyKey agencyKey = agencyService.getAgencyKey(receivedData.getAgencyId());
+        AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
+        AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         Agency agency = agencyService.getAgencyBySiteId(SiteId.of(receivedData.getSiteId()));
 
         List<String> allProductRates = paymentService.findAll().stream().map(Products::getId).collect(Collectors.toList());

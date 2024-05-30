@@ -11,7 +11,7 @@ import javax.persistence.Embeddable;
 @Getter
 @Embeddable
 @NoArgsConstructor
-public class Company extends ValueObject<Company> {
+public class AgencyCompany extends ValueObject<AgencyCompany> {
 
     @Column(name = "SITE_NAME")
     private String siteName;
@@ -40,7 +40,7 @@ public class Company extends ValueObject<Company> {
     }
 
     @Builder
-    public Company(String siteName, String companyName, String businessType, String bizNumber, String ceo, String phoneNumber, String address, String companySite, String email, String serviceUseAgree) {
+    public AgencyCompany(String siteName, String companyName, String businessType, String bizNumber, String ceo, String phoneNumber, String address, String companySite, String email, String serviceUseAgree) {
         this.siteName = siteName;
         this.companyName = companyName;
         this.businessType = businessType;

@@ -5,24 +5,26 @@ import com.modules.link.enums.EnumResultCode;
 import com.modules.link.utils.AuthUtils;
 import com.modules.link.utils.SecurityUtils;
 import lombok.Getter;
+import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static javax.persistence.GenerationType.IDENTITY;
+
 
 @Entity
+@Getter
 @Table(name = "AGENCY_INFO_KEY")
-public class AgencyKey extends DomainEntity<AgencyKey, String> {
+public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
 
     @Id
+    @GeneratedValue(strategy = IDENTITY)
+    @Type(type = "com.modules.link.domain.agency.AgencyId$AgencyIdJavaType")
     @Column(name = "AGENCY_ID")
-    @Getter
-    private String id;
+    private AgencyId id;
 
     @Column(name = "AGENCY_KEY")
     private String agencyKey;
@@ -38,7 +40,7 @@ public class AgencyKey extends DomainEntity<AgencyKey, String> {
 
 
     public String keyString() {
-        return this.id;
+        return this.id.toString();
     }
 
 

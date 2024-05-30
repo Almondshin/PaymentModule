@@ -10,12 +10,11 @@ import java.util.Date;
 
 @Embeddable
 @NoArgsConstructor
-public class AgencyPaymentInfo extends ValueObject<AgencyPaymentInfo> {
+public class AgencyPayment extends ValueObject<AgencyPayment> {
     @Column(name = "RATE_SEL")
     private String rateSel;
     @Column(name = "SCHEDULED_RATE_SEL")
     private String scheduledRateSel;
-
     @Column(name = "EXCESS_COUNT")
     private String excessCount;
     @Column(name = "START_DATE")
@@ -29,7 +28,7 @@ public class AgencyPaymentInfo extends ValueObject<AgencyPaymentInfo> {
     }
 
     @Builder
-    public AgencyPaymentInfo(String rateSel, String scheduledRateSel, String excessCount, Date startDate, Date endDate) {
+    public AgencyPayment(String rateSel, String scheduledRateSel, String excessCount, Date startDate, Date endDate) {
         this.rateSel = rateSel;
         this.scheduledRateSel = scheduledRateSel;
         this.excessCount = excessCount;
