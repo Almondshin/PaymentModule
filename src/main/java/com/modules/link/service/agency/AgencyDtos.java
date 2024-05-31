@@ -1,5 +1,6 @@
 package com.modules.link.service.agency;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.modules.link.domain.agency.*;
 import com.modules.link.enums.EnumResultCode;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class AgencyDtos {
     }
 
     @Getter
+    @ToString
     @Validated
     public static class RegisterInfo {
         @NotNull(message = "siteId")
@@ -50,7 +52,6 @@ public class AgencyDtos {
         private String settleManagerTelNumber;
         @NotNull(message = "settleManagerEmail")
         private String settleManagerEmail;
-        @NotNull(message = "serviceUseAgree")
         private String serviceUseAgree;
 
         public Agency toAgency() {
@@ -78,6 +79,7 @@ public class AgencyDtos {
         }
     }
 
+
     @Getter
     public static class CancelInfo {
         private String agencyId;
@@ -86,6 +88,7 @@ public class AgencyDtos {
 
     @Getter
     @ToString
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AgencyResponse {
 
         private String resultCode;
@@ -115,7 +118,5 @@ public class AgencyDtos {
             this.resultCode = code;
             this.resultMsg = message;
         }
-
-
     }
 }

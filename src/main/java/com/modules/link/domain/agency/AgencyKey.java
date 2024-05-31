@@ -43,17 +43,6 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
         return this.id.toString();
     }
 
-
-    public List<String> getProductList(String agencyId) {
-        List<String> productList = new ArrayList<>();
-        for (String product : this.productList.split(",")) {
-            if (product.startsWith(agencyId)) {
-                productList.add(product);
-            }
-        }
-        return productList;
-    }
-
     public Optional<EnumResultCode> validateHmacAndMsgType(String receivedMessageType, String encryptedData, String verifyInfo) {
         if (!AuthUtils.verifyHmacSHA256(originalMessage(encryptedData), verifyInfo, keyString())) {
             return Optional.of(EnumResultCode.HmacError);
@@ -71,6 +60,17 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
     public String encryptData(String targetEncode) {
         return SecurityUtils.encryptData(targetEncode, this.agencyKey, this.agencyIv);
     }
+
+//    public List<String> getProductList(String agencyId) {
+//        List<String> productList = new ArrayList<>();
+//        for (String product : this.productList.split(",")) {
+//            if (product.startsWith(agencyId)) {
+//                productList.add(product);
+//            }
+//        }
+//        return productList;
+//    }
+
 
 //    public String getAgencyURL(String type) {
 //        Map<String, String> agencyMap = Utils.jsonStringToObject(this.agencyUrl, Map.class);
