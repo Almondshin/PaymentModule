@@ -8,7 +8,6 @@ import javax.persistence.*;
 
 import java.util.Objects;
 
-import static javax.persistence.GenerationType.IDENTITY;
 
 @Getter
 @Entity
@@ -16,9 +15,8 @@ import static javax.persistence.GenerationType.IDENTITY;
 public class Site extends DomainEntity<Site, SiteId> {
 
     @Id
-    @GeneratedValue(strategy = IDENTITY)
     @Type(type = "com.modules.link.domain.agency.SiteId$SiteIdJavaType")
-    @Column(name = "SITE_ID")
+    @Column(name = "SITE_ID" ,nullable = false)
     private SiteId id;
 
     @Column(name = "SITE_STATUS")

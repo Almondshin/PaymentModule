@@ -17,6 +17,15 @@ public class Utils {
         }
     }
 
+    public static <T> String objectToJSONString(T object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            System.out.println("objectToJSONString 실패: " + e.getMessage());
+            return null;
+        }
+    }
+
     public static <T> T jsonStringToObject(String jsonString, Class<T> valueType) {
         try {
             return objectMapper.readValue(jsonString, valueType);

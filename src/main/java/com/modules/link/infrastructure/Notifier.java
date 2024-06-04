@@ -1,6 +1,6 @@
-package com.modules.link.service.notification;
+package com.modules.link.infrastructure;
 
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -9,9 +9,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-@Service
-public class NotifyService {
-
+@Component
+public class Notifier {
     public String sendNotification(String targetUrl, String responseData) {
         try {
             URL url = new URL(targetUrl);
@@ -27,8 +26,8 @@ public class NotifyService {
                 dataOutputStream.write(responseData.getBytes(StandardCharsets.UTF_8));
             }
 
-            System.out.println("전달 URL 체크 : " + url);
-            System.out.println("전달 data 체크 : " + responseData);
+            System.out.println("[Notify Target URL] : " + url);
+            System.out.println("[Notify Data] : " + responseData);
 
             DataInputStream inputStream = new DataInputStream(connection.getInputStream());
             ByteArrayOutputStream bout = new ByteArrayOutputStream();

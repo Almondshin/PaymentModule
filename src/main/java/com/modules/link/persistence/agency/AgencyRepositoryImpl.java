@@ -22,9 +22,7 @@ public class AgencyRepositoryImpl extends BaseRepository<Agency, SiteId, AgencyJ
     @Transactional
     @Override
     public Agency find(SiteId id) {
-        System.out.println("id  : "  + id);
         Optional<Agency> agency = repository.findById(id);
-        System.out.println("agency : "+ agency);
         return agency.orElse(null);
     }
 

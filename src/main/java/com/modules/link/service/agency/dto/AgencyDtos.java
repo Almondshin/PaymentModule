@@ -1,4 +1,4 @@
-package com.modules.link.service.agency;
+package com.modules.link.service.agency.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.modules.link.domain.agency.*;
@@ -7,50 +7,50 @@ import lombok.Getter;
 import lombok.ToString;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 public class AgencyDtos {
     @Getter
     public static class StatusInfo {
-        private String agencyId;
-        private String siteId;
+        private AgencyId agencyId;
+        private SiteId siteId;
     }
 
     @Getter
-    @ToString
     @Validated
     public static class RegisterInfo {
         @NotNull(message = "siteId")
         private SiteId siteId;
         @NotNull(message = "agencyId")
         private AgencyId agencyId;
-        @NotNull(message = "siteName")
+        @NotBlank(message = "siteName")
         private String siteName;
-        @NotNull(message = "companyName")
+        @NotBlank(message = "companyName")
         private String companyName;
-        @NotNull(message = "businessType")
+        @NotBlank(message = "businessType")
         private String businessType;
-        @NotNull(message = "bizNumber")
+        @NotBlank(message = "bizNumber")
         private String bizNumber;
-        @NotNull(message = "ceoName")
+        @NotBlank(message = "ceoName")
         private String ceoName;
-        @NotNull(message = "phoneNumber")
+        @NotBlank(message = "phoneNumber")
         private String phoneNumber;
-        @NotNull(message = "address")
+        @NotBlank(message = "address")
         private String address;
-        @NotNull(message = "companySite")
+        @NotBlank(message = "companySite")
         private String companySite;
         private String email;
         private String rateSel;
         private Date startDate;
-        @NotNull(message = "settleManagerName")
+        @NotBlank(message = "settleManagerName")
         private String settleManagerName;
-        @NotNull(message = "settleManagerPhoneNumber")
+        @NotBlank(message = "settleManagerPhoneNumber")
         private String settleManagerPhoneNumber;
-        @NotNull(message = "settleManagerTelNumber")
+        @NotBlank(message = "settleManagerTelNumber")
         private String settleManagerTelNumber;
-        @NotNull(message = "settleManagerEmail")
+        @NotBlank(message = "settleManagerEmail")
         private String settleManagerEmail;
         private String serviceUseAgree;
 
@@ -62,6 +62,7 @@ public class AgencyDtos {
                             .siteName(this.siteName)
                             .companyName(this.companyName)
                             .businessType(this.businessType)
+                            .bizNumber(this.bizNumber)
                             .ceo(this.ceoName)
                             .phoneNumber(this.phoneNumber)
                             .address(this.address)
@@ -82,8 +83,8 @@ public class AgencyDtos {
 
     @Getter
     public static class CancelInfo {
-        private String agencyId;
-        private String siteId;
+        private AgencyId agencyId;
+        private SiteId siteId;
     }
 
     @Getter
@@ -91,8 +92,8 @@ public class AgencyDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AgencyResponse {
 
-        private String resultCode;
-        private String resultMsg;
+        private final String resultCode;
+        private final String resultMsg;
         private String msgType;
         private String encryptData;
         private String verifyInfo;

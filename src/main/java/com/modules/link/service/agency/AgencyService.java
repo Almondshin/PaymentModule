@@ -5,24 +5,27 @@ import com.modules.link.domain.agency.*;
 import com.modules.link.domain.agency.service.AgencyDomainService;
 import com.modules.link.enums.EnumAgency;
 import com.modules.link.enums.EnumResultCode;
-import com.modules.link.service.agency.AgencyDtos.AgencyResponse;
-import com.modules.link.service.agency.AgencyDtos.CancelInfo;
-import com.modules.link.service.agency.AgencyDtos.RegisterInfo;
-import com.modules.link.service.agency.AgencyDtos.StatusInfo;
+import com.modules.link.infrastructure.Notifier;
+import com.modules.link.service.agency.dto.AgencyDtos.AgencyResponse;
+import com.modules.link.service.agency.dto.AgencyDtos.CancelInfo;
+import com.modules.link.service.agency.dto.AgencyDtos.RegisterInfo;
+import com.modules.link.service.agency.dto.AgencyDtos.StatusInfo;
+import com.modules.link.service.notify.dto.notifyDtos;
+import com.modules.link.service.notify.dto.notifyDtos.RegisterNotification;
 import com.modules.link.utils.Utils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.validation.constraints.NotNull;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class AgencyService {
     private static final String STATUS_TYPE = "status";
@@ -30,18 +33,19 @@ public class AgencyService {
     private static final String REGISTER_TYPE = "reg";
     private static final String CANCEL_TYPE = "cancel";
 
-
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
 
     private final AgencyRepository agencyRepository;
     private final AgencyDomainService agencyDomainService;
+    private final Notifier notifier;
     private final Validator validator;
 
 
-    public AgencyService(AgencyRepository agencyRepository, AgencyDomainService agencyDomainService, Validator validator) {
+    public AgencyService(AgencyRepository agencyRepository, AgencyDomainService agencyDomainService, Notifier notifier, Validator validator) {
         this.agencyRepository = agencyRepository;
         this.agencyDomainService = agencyDomainService;
+        this.notifier = notifier;
         this.validator = validator;
     }
 
@@ -53,7 +57,7 @@ public class AgencyService {
     public AgencyResponse getSiteStatus(AgencyKey agencyKey, AgencyReceived receivedData) {
         String originalMessage = agencyDomainService.extractOriginalMessage(agencyKey, receivedData.getEncryptData());
         StatusInfo statusInfo = Utils.jsonStringToObject(originalMessage, StatusInfo.class);
-        Agency agency = getAgency(SiteId.of(statusInfo.getSiteId()));
+        Agency agency = getAgency(statusInfo.getSiteId());
         String targetDate = agencyDomainService.generateTargetDate(agency, STATUS_TYPE);
         String messageType = EnumAgency.getMsgType(agencyKey.keyString(), SITE_INFO);
 
@@ -67,36 +71,28 @@ public class AgencyService {
     @Validated
     public AgencyResponse registerNewAgency(AgencyKey agencyKey, AgencyReceived receivedData) {
         String originalMessage = agencyDomainService.extractOriginalMessage(agencyKey, receivedData.getEncryptData());
-
-        System.out.println("Original Message: " + originalMessage);
-
         RegisterInfo registerInfo = Utils.jsonStringToObject(originalMessage, RegisterInfo.class);
-
-        System.out.println("RegisterInfo: " + registerInfo);
 
         Set<String> missingFields = validateNotNullFields(registerInfo);
         if (!missingFields.isEmpty()) {
             String missingField = String.join(", ", missingFields);
-            System.out.println("missingField : " + missingField);
             return new AgencyResponse(EnumResultCode.NoSuchFieldError.getCode(), missingField + EnumResultCode.NoSuchFieldError.getMessage());
         }
 
+        if (getSite(registerInfo.getSiteId()) != null || getAgency(registerInfo.getSiteId()) != null) {
+            return new AgencyResponse(EnumResultCode.DuplicateMember.getCode(), EnumResultCode.DuplicateMember.getMessage());
+        }
         Agency agency = registerInfo.toAgency();
         save(agency);
-        String targetData = agencyDomainService.generateTargetDate(agency, REGISTER_TYPE);
-        String messageType = EnumAgency.getMsgType(agencyKey.keyString(), REGISTER_TYPE);
 
-        String encryptedData = agencyDomainService.encryptData(agencyKey, targetData);
-        String hmac = agencyDomainService.generateHmac(agencyKey, targetData);
-
-        return new AgencyResponse(encryptedData, hmac, messageType);
+        String registerMessage = new RegisterNotification(registerInfo.getSiteId(), registerInfo.getAgencyId(), registerInfo.getSiteName()).makeNotification();
+        notifier.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register/email", registerMessage);
+        return new AgencyResponse();
     }
 
     private Set<String> validateNotNullFields(Object object) {
         Set<ConstraintViolation<Object>> violations = validator.validate(object);
-        System.out.println("violations : " + violations);
         return violations.stream()
-                .filter(violation -> violation.getConstraintDescriptor().getAnnotation() instanceof NotNull)
                 .map(ConstraintViolation::getPropertyPath)
                 .map(Object::toString)
                 .collect(Collectors.toSet());
@@ -107,13 +103,9 @@ public class AgencyService {
     public AgencyResponse cancelAgency(AgencyKey agencyKey, AgencyReceived receivedData) {
         String originalMessage = agencyDomainService.extractOriginalMessage(agencyKey, receivedData.getEncryptData());
         CancelInfo cancelInfo = Utils.jsonStringToObject(originalMessage, CancelInfo.class);
-        Agency agency = getAgency(SiteId.of(cancelInfo.getSiteId()));
-        String targetDate = agencyDomainService.generateTargetDate(agency, CANCEL_TYPE);
-
-        String encryptedData = agencyDomainService.encryptData(agencyKey, targetDate);
-        String hmac = agencyDomainService.generateHmac(agencyKey, targetDate);
-
-        return new AgencyResponse(encryptedData, hmac, CANCEL_TYPE);
+        String cancelMessage = new notifyDtos.CancelNotification(cancelInfo.getSiteId(), cancelInfo.getAgencyId()).makeNotification();
+        notifier.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register/email", cancelMessage);
+        return new AgencyResponse();
     }
 
 

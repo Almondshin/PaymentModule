@@ -3,7 +3,7 @@ package com.modules.link.controller;
 import com.modules.link.controller.container.AgencyReceived;
 import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.AgencyKey;
-import com.modules.link.service.agency.AgencyDtos;
+import com.modules.link.service.agency.dto.AgencyDtos.AgencyResponse;
 import com.modules.link.service.agency.AgencyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ public class AgencyController {
     private final AgencyService agencyService;
 
     @PostMapping("/getSiteStatus")
-    public ResponseEntity<AgencyDtos.AgencyResponse> getStatus(@RequestBody AgencyReceived receivedData) {
+    public ResponseEntity<AgencyResponse> getStatus(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(
@@ -33,7 +33,7 @@ public class AgencyController {
     }
 
     @PostMapping("/regSiteInfo")
-    public ResponseEntity<?> save(@RequestBody AgencyReceived receivedData) {
+    public ResponseEntity<AgencyResponse> save(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(
@@ -46,7 +46,7 @@ public class AgencyController {
     }
 
     @PostMapping("/cancelSiteInfo")
-    public ResponseEntity<AgencyDtos.AgencyResponse> cancel(@RequestBody AgencyReceived receivedData) {
+    public ResponseEntity<AgencyResponse> cancel(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
         return ResponseEntity.ok(

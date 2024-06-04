@@ -28,11 +28,11 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Type(type = "com.modules.link.domain.agency.SiteId$SiteIdJavaType")
-    @Column(name = "SITE_ID")
+    @Column(name = "SITE_ID", nullable = false)
     private SiteId id;
 
     @Type(type = "com.modules.link.domain.agency.AgencyId$AgencyIdJavaType")
-    @Column(name = "AGENCY_ID")
+    @Column(name = "AGENCY_ID", nullable = false)
     private AgencyId agencyId;
 
     @Column(name = "SITE_STATUS")
@@ -103,15 +103,16 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     }
 
     public static Agency of(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
+        if (siteId == null || agencyId == null) {
+            throw new IllegalArgumentException("SiteId and AgencyId cannot be null");
+        }
         Agency agency = new Agency();
-        // 여기에서 AgencyCompany, AgencyPayment, Manager를 설정
         agency.id = siteId;
         agency.agencyId = agencyId;
         agency.agencyStatus = EnumSiteStatus.PENDING.getCode();
         agency.extensionStatus = EnumExtensionStatus.DEFAULT.getCode();
         agency.agencyCompany = agencyCompany;
         agency.agencyManager = agencyManager;
-
         return agency;
     }
 
