@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.modules.link.domain.agency.*;
 import com.modules.link.enums.EnumResultCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
@@ -22,6 +22,7 @@ public class AgencyDtos {
     @Validated
     public static class RegisterInfo {
         @NotNull(message = "siteId")
+        @Max(value = 12)
         private SiteId siteId;
         @NotNull(message = "agencyId")
         private AgencyId agencyId;
@@ -88,7 +89,6 @@ public class AgencyDtos {
     }
 
     @Getter
-    @ToString
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AgencyResponse {
 

@@ -12,7 +12,6 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import java.util.*;
 
-import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Getter
@@ -26,7 +25,6 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     private static final String CANCEL_TYPE = "cancel";
 
     @Id
-    @GeneratedValue(strategy = IDENTITY)
     @Type(type = "com.modules.link.domain.agency.SiteId$SiteIdJavaType")
     @Column(name = "SITE_ID", nullable = false)
     private SiteId id;
@@ -57,7 +55,6 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
     private AgencyKey agencyKey;
-
 
 
     private void addSite(Agency agency, Site site) {
