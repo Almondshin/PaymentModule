@@ -1,23 +1,19 @@
 package com.modules.link.domain.agency;
 
 import com.modules.base.domain.DomainEntity;
-import com.modules.link.enums.EnumResultCode;
-import com.modules.link.utils.AuthUtils;
-import com.modules.link.utils.SecurityUtils;
 import lombok.Getter;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.util.Optional;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
 
 @Entity
-@Getter
 @Table(name = "AGENCY_INFO_KEY")
 public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
 
+    @Getter
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @Type(type = "com.modules.link.domain.agency.AgencyId$AgencyIdJavaType")
@@ -41,22 +37,12 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
         return this.id.toString();
     }
 
-    public Optional<EnumResultCode> validateHmacAndMsgType(String receivedMessageType, String encryptedData, String verifyInfo) {
-        if (!AuthUtils.verifyHmacSHA256(originalMessage(encryptedData), verifyInfo, keyString())) {
-            return Optional.of(EnumResultCode.HmacError);
-        }
-        if (!AuthUtils.verifyMessageType(receivedMessageType, keyString())){
-            return Optional.of(EnumResultCode.MsgTypeError);
-        }
-        return Optional.empty();
+    public String getKey() {
+        return this.agencyKey;
     }
 
-    public String originalMessage(String encryptData) {
-        return new String(SecurityUtils.decryptData(encryptData, this.agencyKey, this.agencyIv));
-    }
-
-    public String encryptData(String targetEncode) {
-        return SecurityUtils.encryptData(targetEncode, this.agencyKey, this.agencyIv);
+    public String getIv() {
+        return this.agencyIv;
     }
 
 //    public List<String> getProductList(String agencyId) {
@@ -84,7 +70,6 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
 //                throw new IllegalStateException("'" + type + "'는 존재하지 않는 타입 입니다.");
 //        }
 //    }
-
 
 
 }

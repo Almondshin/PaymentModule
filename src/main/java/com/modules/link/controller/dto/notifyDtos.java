@@ -1,4 +1,4 @@
-package com.modules.link.service.notify.dto;
+package com.modules.link.controller.dto;
 
 import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.SiteId;

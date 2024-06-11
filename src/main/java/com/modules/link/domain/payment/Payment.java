@@ -1,17 +1,22 @@
 package com.modules.link.domain.payment;
 
 import com.modules.base.domain.AggregateRoot;
+import com.modules.link.domain.agency.SiteId;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
 @ToString
+@NoArgsConstructor
 @Table(name = "AGENCY_PAYMENT_HISTORY")
 public class Payment extends AggregateRoot<Payment, PGTradeNum> {
 
@@ -23,8 +28,9 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
     @Column(name = "AGENCY_ID", nullable = false)
     private String agencyId;
 
+    @Type(type = "com.modules.link.domain.agency.SiteId$SiteIdJavaType")
     @Column(name = "SITE_ID", nullable = false)
-    private String siteId;
+    private SiteId siteId;
 
     @Column(name = "BILL_KEY")
     private String billKey;
@@ -44,10 +50,14 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
     @Column(name = "MOD_DATE")
     private Date modDate;
 
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "RATE_SEL", insertable = false, updatable = false)
+    private final List<Product> products = new ArrayList<>();
+
 
 
     @Builder
-    public Payment(PGTradeNum id, String agencyId, String siteId, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
+    public Payment(PGTradeNum id, String agencyId, SiteId siteId, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
         this.id = id;
         this.agencyId = agencyId;
         this.siteId = siteId;
@@ -59,7 +69,8 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
         this.modDate = modDate;
     }
 
-    public static Payment of(PGTradeNum id, String agencyId, String siteId, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
+
+    public static Payment of(PGTradeNum id, String agencyId, SiteId siteId, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
         if (id == null || agencyId == null || siteId == null) {
             throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
         }
@@ -75,4 +86,9 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
                 .modDate(new Date())
                 .build();
     }
+
+    public List<Product> getProducts() {
+        return new ArrayList<>(products);
+    }
+
 }

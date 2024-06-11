@@ -5,7 +5,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumSiteStatus;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 
@@ -16,6 +18,7 @@ import java.util.*;
 @Entity
 @Getter
 @ToString
+@NoArgsConstructor
 @Table(name = "AGENCY_INFO")
 public class Agency extends AggregateRoot<Agency, SiteId> {
 
@@ -99,18 +102,30 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
         }
     }
 
+
+    @Builder
+    public Agency(SiteId id, AgencyId agencyId, String agencyStatus, String extensionStatus, AgencyCompany agencyCompany, AgencyPayment agencyPayment, AgencyManager agencyManager) {
+        this.id = id;
+        this.agencyId = agencyId;
+        this.agencyStatus = agencyStatus;
+        this.extensionStatus = extensionStatus;
+        this.agencyCompany = agencyCompany;
+        this.agencyPayment = agencyPayment;
+        this.agencyManager = agencyManager;
+    }
+
     public static Agency of(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
         if (siteId == null || agencyId == null) {
             throw new IllegalArgumentException("SiteId and AgencyId cannot be null");
         }
-        Agency agency = new Agency();
-        agency.id = siteId;
-        agency.agencyId = agencyId;
-        agency.agencyStatus = EnumSiteStatus.PENDING.getCode();
-        agency.extensionStatus = EnumExtensionStatus.DEFAULT.getCode();
-        agency.agencyCompany = agencyCompany;
-        agency.agencyManager = agencyManager;
-        return agency;
+        return Agency.builder()
+                .id(siteId)
+                .agencyId(agencyId)
+                .agencyStatus(EnumSiteStatus.PENDING.getCode())
+                .extensionStatus(EnumExtensionStatus.DEFAULT.getCode())
+                .agencyCompany(agencyCompany)
+                .agencyManager(agencyManager)
+                .build();
     }
 
 }
