@@ -1,8 +1,6 @@
 package com.modules.link.domain.agency;
 
 import com.modules.base.domain.AggregateRoot;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumSiteStatus;
 import lombok.Builder;
@@ -12,7 +10,6 @@ import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.util.*;
 
 
 @Entity
@@ -74,34 +71,6 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
         }
 
     }
-
-    public String makeVerifyAndEncryptData(String type) {
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> map = new HashMap<>();
-        try {
-            switch (type) {
-                case STATUS_TYPE: {
-                    map.put("siteId", this.id.toString());
-                    map.put("siteStatus", this.agencyStatus);
-                    System.out.println("SITE STATUS MAP " + map);
-                    return mapper.writeValueAsString(map);
-                }
-                case REGISTER_TYPE: {
-                    return mapper.writeValueAsString(this);
-                }
-                case CANCEL_TYPE: {
-                    map.put("agencyId", this.agencyId.toString());
-                    map.put("siteId", this.id.toString());
-                    map.put("siteName", this.agencyCompany.getSiteName());
-                    return mapper.writeValueAsString(map);
-                }
-            }
-            return mapper.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 
     @Builder
     public Agency(SiteId id, AgencyId agencyId, String agencyStatus, String extensionStatus, AgencyCompany agencyCompany, AgencyPayment agencyPayment, AgencyManager agencyManager) {

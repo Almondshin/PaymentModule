@@ -1,23 +1,43 @@
 package com.modules.link.domain.validate.service;
 
+import com.dsmdb.japi.MagicDBAPI;
 import com.modules.link.enums.EnumAgency;
-import com.modules.link.utils.SecurityUtils;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.Cipher;
 import javax.crypto.Mac;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.Base64;
 
 @Component
 public class ValidateDomainService {
 
     public String originalMessage(String encryptedData, String key, String iv) {
-        return new String(SecurityUtils.decryptData(encryptedData, key, iv));
+        SecretKeySpec secretKeySpec = new SecretKeySpec(decodeKey(key), "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(decodeIv(iv));
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+            return new String(cipher.doFinal(Base64.getDecoder().decode(encryptedData)));
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String encryptData(String targetEncode, String key, String iv) {
-        return SecurityUtils.encryptData(targetEncode, key, iv);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(decodeKey(key), "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(decodeIv(iv));
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+            byte[] cipherBytes = cipher.doFinal(targetEncode.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(cipherBytes);
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean verifyHmacSHA256(String originalMessage, String verifyInfo, String keyString) {
@@ -28,6 +48,15 @@ public class ValidateDomainService {
             e.printStackTrace();
             return false;
         }
+    }
+
+
+    private static byte[] decodeKey(String key) {
+        return Base64.getDecoder().decode(MagicDBAPI.decrypt("mokDBEnc", key));
+    }
+
+    private static byte[] decodeIv(String iv) {
+        return Base64.getDecoder().decode(MagicDBAPI.decrypt("mokDBEnc", iv));
     }
 
     public boolean verifyMessageType(String receivedMessageType, String keyString) {
@@ -81,6 +110,16 @@ public class ValidateDomainService {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public boolean isSiteIdStartWithInitial(String agencyId, String siteId){
+        for (EnumAgency enumAgency : EnumAgency.values()) {
+            if (enumAgency.getCode().equals(agencyId) &&
+                    siteId.toUpperCase().startsWith(enumAgency.getInitial())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

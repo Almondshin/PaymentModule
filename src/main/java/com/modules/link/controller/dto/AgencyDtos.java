@@ -9,6 +9,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.Objects;
 
 public class AgencyDtos {
     @Getter
@@ -19,10 +20,8 @@ public class AgencyDtos {
 
     @Getter
     @Validated
-    @ToString
     public static class RegisterInfo {
         @NotNull(message = "siteId")
-        @Max(value = 12)
         private SiteId siteId;
         @NotNull(message = "agencyId")
         private AgencyId agencyId;

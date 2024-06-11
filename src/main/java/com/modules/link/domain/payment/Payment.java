@@ -1,6 +1,7 @@
 package com.modules.link.domain.payment;
 
 import com.modules.base.domain.AggregateRoot;
+import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.SiteId;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,8 +26,9 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
     @Column(name = "PG_TRADE_NUM", nullable = false)
     private PGTradeNum id;
 
+    @Type(type = "com.modules.link.domain.agency.AgencyId$AgencyIdJavaType")
     @Column(name = "AGENCY_ID", nullable = false)
-    private String agencyId;
+    private AgencyId agencyId;
 
     @Type(type = "com.modules.link.domain.agency.SiteId$SiteIdJavaType")
     @Column(name = "SITE_ID", nullable = false)
@@ -55,9 +57,8 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
     private final List<Product> products = new ArrayList<>();
 
 
-
     @Builder
-    public Payment(PGTradeNum id, String agencyId, SiteId siteId, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
+    public Payment(PGTradeNum id, AgencyId agencyId, SiteId siteId, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
         this.id = id;
         this.agencyId = agencyId;
         this.siteId = siteId;
@@ -70,7 +71,7 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> {
     }
 
 
-    public static Payment of(PGTradeNum id, String agencyId, SiteId siteId, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
+    public static Payment of(PGTradeNum id, AgencyId agencyId, SiteId siteId, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
         if (id == null || agencyId == null || siteId == null) {
             throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
         }

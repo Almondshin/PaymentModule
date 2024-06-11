@@ -48,4 +48,13 @@ public enum EnumAgency {
         }
         throw new IllegalStateException("해당 agencyId를 가진 EnumAgency가 존재하지 않습니다. " + agencyId);
     }
+
+    public static String initialCheck(String agencyId) {
+        for (EnumAgency agency : EnumAgency.values()) {
+            if (agency.getCode().equals(agencyId)) {
+                return agency.getInitial();
+            }
+        }
+        throw new IllegalArgumentException("Invalid agencyId: " + agencyId);
+    }
 }

@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityExistsException;
+import java.util.Objects;
 
-@Slf4j
 @Service
 public class AgencyService {
     private static final String STATUS_TYPE = "status";
@@ -42,6 +42,9 @@ public class AgencyService {
     @Transactional
     public String generateSiteStatusData(SiteId siteId) {
         Agency agency = getAgency(siteId);
+        if (Objects.isNull(agency)) {
+            return agencyDomainService.generateNotFoundStatusData(siteId);
+        }
         return agencyDomainService.generateTargetData(agency, STATUS_TYPE);
     }
 

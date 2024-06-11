@@ -19,7 +19,7 @@ public class Product extends DomainEntity<Product, RateSel> {
     @Type(type = "com.modules.link.domain.payment.RateSel$RateSelJavaType")
     @Column(name = "RATE_SEL")
     private RateSel id;
-    @Column(name = "RATE_SEL")
+    @Column(name = "AGENCY_ID")
     private String agencyId;
     @Column(name = "NAME")
     private String name;

@@ -1,10 +1,13 @@
 package com.modules.link.controller;
 
 import com.modules.link.controller.container.AgencyReceived;
-import com.modules.link.controller.dto.AgencyDtos.*;
-import com.modules.link.controller.dto.notifyDtos.*;
-import com.modules.link.controller.response.AgencyResponse;
-import com.modules.link.domain.agency.Agency;
+import com.modules.link.controller.container.AgencyResponse;
+import com.modules.link.controller.dto.AgencyDtos.CancelInfo;
+import com.modules.link.controller.dto.AgencyDtos.RegisterInfo;
+import com.modules.link.controller.dto.AgencyDtos.StatusInfo;
+import com.modules.link.controller.dto.notifyDtos.CancelNotification;
+import com.modules.link.controller.dto.notifyDtos.RegisterNotification;
+import com.modules.link.controller.exception.InvalidSiteIdInitialException;
 import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.domain.validate.ValidateInfo;
@@ -23,10 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityExistsException;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,12 +49,6 @@ public class AgencyController {
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
 
-    // getStatus라는 API를 요청하면
-    // client로부터 받은 암호화된 값을 복호화 및 검증하고 [validate 도메인]
-    // 검증결과에따라 다음단계 진행
-    // 검증된 client로 부터 받은 암호화된 값을 복호화하고
-    // 복호화 된 값을 하나의 객체로 변환하고 [Adapter-Dto]
-    // API에 반환하기 위한 데이터를 조형한다. [Adapter-AgencyResponse]
     @PostMapping("/getSiteStatus")
     public ResponseEntity<AgencyResponse> getStatus(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
@@ -69,7 +64,11 @@ public class AgencyController {
         }
         String originalMessage = validateService.originalMessage(validateInfo, agencyKey);
         StatusInfo statusInfo = Utils.jsonStringToObject(originalMessage, StatusInfo.class);
+        if (!validateService.isSiteIdStartWithInitial(agencyId, statusInfo.getSiteId())) {
+            throw new InvalidSiteIdInitialException(EnumResultCode.IllegalArgument, agencyId.toString(), statusInfo.getSiteId().toString());
+        }
         String targetData = agencyService.generateSiteStatusData(statusInfo.getSiteId());
+
         return ResponseEntity.ok(
                 AgencyResponse.builder()
                         .encryptData(validateService.encryptData(targetData, agencyKey))
@@ -95,6 +94,10 @@ public class AgencyController {
         }
         String originalMessage = validateService.originalMessage(validateInfo, agencyKey);
         RegisterInfo registerInfo = Utils.jsonStringToObject(originalMessage, RegisterInfo.class);
+        if (!validateService.isSiteIdStartWithInitial(agencyId, registerInfo.getSiteId())) {
+            throw new InvalidSiteIdInitialException(EnumResultCode.IllegalArgument, agencyId.toString(), registerInfo.getSiteId().toString());
+        }
+
         Set<String> missingFields = validateNotNullFields(registerInfo);
         if (!missingFields.isEmpty()) {
             String missingField = String.join(", ", missingFields);
@@ -103,11 +106,8 @@ public class AgencyController {
                     missingField + EnumResultCode.NoSuchFieldError.getMessage()));
         }
 
-        try {
-            agencyService.save(registerInfo.toAgency());
-        } catch (EntityExistsException e) {
-            return ResponseEntity.ok(new AgencyResponse(EnumResultCode.DuplicateMember.getCode(), e.getMessage()));
-        }
+        agencyService.save(registerInfo.toAgency());
+
         String registerMessage = new RegisterNotification(registerInfo.getSiteId(), registerInfo.getAgencyId(), registerInfo.getSiteName()).makeNotification();
         notifier.sendNotification(profileSpecificAdminUrl + REGISTER_API, registerMessage);
         return ResponseEntity.ok(new AgencyResponse());

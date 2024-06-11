@@ -1,6 +1,8 @@
 package com.modules.link.service.validate;
 
+import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.AgencyKey;
+import com.modules.link.domain.agency.SiteId;
 import com.modules.link.domain.validate.ValidateInfo;
 import com.modules.link.domain.validate.service.ValidateDomainService;
 import com.modules.link.enums.EnumResultCode;
@@ -17,9 +19,7 @@ public class ValidateService {
 
     public Optional<EnumResultCode> validateHmacAndMsgType(ValidateInfo validateInfo, AgencyKey agencyKey) {
         String keyString = agencyKey.keyString();
-        String key = agencyKey.getKey();
-        String iv = agencyKey.getIv();
-        String originalMessage = validateDomainService.originalMessage(validateInfo.getEncryptDate(), key, iv);
+        String originalMessage = validateDomainService.originalMessage(validateInfo.getEncryptDate(), agencyKey.getKey(), agencyKey.getIv());
         if (!validateDomainService.verifyHmacSHA256(originalMessage, validateInfo.getVerifyInfo(), keyString)) {
             return Optional.of(EnumResultCode.HmacError);
         }
@@ -38,6 +38,10 @@ public class ValidateService {
     }
 
     public String hmacSHA256(String target, AgencyKey agencyKey) {
-        return validateDomainService.hmacSHA256(target, agencyKey.getKey());
+        return validateDomainService.hmacSHA256(target, agencyKey.keyString());
+    }
+
+    public boolean isSiteIdStartWithInitial(AgencyId agencyId, SiteId siteId) {
+        return validateDomainService.isSiteIdStartWithInitial(agencyId.toString(), siteId.toString());
     }
 }

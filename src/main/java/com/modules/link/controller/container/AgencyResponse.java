@@ -1,4 +1,4 @@
-package com.modules.link.controller.response;
+package com.modules.link.controller.container;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.modules.link.enums.EnumResultCode;
