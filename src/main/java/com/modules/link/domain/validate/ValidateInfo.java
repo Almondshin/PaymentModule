@@ -2,8 +2,10 @@ package com.modules.link.domain.validate;
 
 import com.modules.base.domain.ValueObject;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @NoArgsConstructor
 public class ValidateInfo extends ValueObject<ValidateInfo> {
     private String messageType;
@@ -15,17 +17,5 @@ public class ValidateInfo extends ValueObject<ValidateInfo> {
         this.messageType = messageType;
         this.encryptDate = encryptDate;
         this.verifyInfo = verifyInfo;
-    }
-
-    public String getMessageType() {
-        return messageType;
-    }
-
-    public String getEncryptDate() {
-        return encryptDate;
-    }
-
-    public String getVerifyInfo() {
-        return verifyInfo;
     }
 }

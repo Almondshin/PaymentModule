@@ -1,6 +1,6 @@
 package com.modules;
 
-import com.modules.link.service.agency.dto.AgencyDtos.*;
+import com.modules.link.controller.dto.AgencyDtos.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.validation.ConstraintViolation;

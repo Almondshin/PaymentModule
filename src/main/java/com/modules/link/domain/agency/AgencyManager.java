@@ -6,20 +6,25 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.validation.constraints.NotBlank;
 
 @Embeddable
 @NoArgsConstructor
 public class AgencyManager extends ValueObject<AgencyManager> {
     @Column(name = "SETTLE_MANAGER_NAME")
+    @NotBlank(message = "settleManagerName")
     private String name;
 
     @Column(name = "SETTLE_MANAGER_PHONE_NUMBER")
+    @NotBlank(message = "settleManagerPhoneNumber")
     private String phoneNumber;
 
     @Column(name = "SETTLE_MANAGER_TEL_NUMBER")
+    @NotBlank(message = "settleManagerTelNumber")
     private String telNumber;
 
     @Column(name = "SETTLE_MANAGER_EMAIL")
+    @NotBlank(message = "settleManagerEmail")
     private String email;
 
     @Override

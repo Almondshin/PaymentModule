@@ -14,7 +14,6 @@ public class AgencyDomainService {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static final String STATUS_TYPE = "status";
-    private static final String REGISTER_TYPE = "reg";
     private static final String CANCEL_TYPE = "cancel";
     private static final String STATUS_TYPE_NULL = "E";
 
@@ -27,13 +26,9 @@ public class AgencyDomainService {
                     map.put("siteStatus", agency.getAgencyStatus());
                     return mapper.writeValueAsString(map);
                 }
-                case REGISTER_TYPE: {
-                    return mapper.writeValueAsString(this);
-                }
                 case CANCEL_TYPE: {
                     map.put("agencyId", agency.getAgencyId().toString());
                     map.put("siteId", agency.getId().toString());
-                    map.put("siteName", agency.getAgencyCompany().getSiteName());
                     return mapper.writeValueAsString(map);
                 }
             }

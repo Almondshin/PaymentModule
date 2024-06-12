@@ -1,12 +1,14 @@
-package com.modules.link.controller.exception;
+package com.modules.link.service.exception;
+
 import com.modules.link.enums.EnumResultCode;
 import lombok.Getter;
 
 @Getter
-public class NullAgencyIdSiteIdException extends RuntimeException {
+public class EntityNotFoundException extends RuntimeException {
     private final EnumResultCode enumResultCode;
     private final String siteId;
-    public NullAgencyIdSiteIdException(EnumResultCode enumResultCode, String siteId) {
+
+    public EntityNotFoundException(EnumResultCode enumResultCode, String siteId) {
         this.enumResultCode = enumResultCode;
         this.siteId = siteId;
     }

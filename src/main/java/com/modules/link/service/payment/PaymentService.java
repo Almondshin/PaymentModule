@@ -1,6 +1,7 @@
 package com.modules.link.service.payment;
 
 import com.modules.link.domain.payment.ProductRepository;
+import com.modules.link.domain.payment.service.PaymentDomainService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentService {
 
     private final ProductRepository productRepository;
+    private final PaymentDomainService paymentDomainService;
 
 
 //    @Transactional

@@ -1,5 +1,8 @@
 package com.modules.link.service.validate;
 
+import com.modules.link.service.exception.HmacException;
+import com.modules.link.service.exception.InvalidSiteIdInitialException;
+import com.modules.link.service.exception.MessageTypeException;
 import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.domain.agency.SiteId;
@@ -9,24 +12,21 @@ import com.modules.link.enums.EnumResultCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class ValidateService {
 
     private final ValidateDomainService validateDomainService;
 
-    public Optional<EnumResultCode> validateHmacAndMsgType(ValidateInfo validateInfo, AgencyKey agencyKey) {
+    public void validateHmacAndMsgType(ValidateInfo validateInfo, AgencyKey agencyKey) {
         String keyString = agencyKey.keyString();
         String originalMessage = validateDomainService.originalMessage(validateInfo.getEncryptDate(), agencyKey.getKey(), agencyKey.getIv());
         if (!validateDomainService.verifyHmacSHA256(originalMessage, validateInfo.getVerifyInfo(), keyString)) {
-            return Optional.of(EnumResultCode.HmacError);
+            throw new HmacException(EnumResultCode.HmacError);
         }
         if (!validateDomainService.verifyMessageType(validateInfo.getMessageType(), keyString)) {
-            return Optional.of(EnumResultCode.MsgTypeError);
+            throw new MessageTypeException(EnumResultCode.MsgTypeError);
         }
-        return Optional.of(EnumResultCode.SUCCESS);
     }
 
     public String originalMessage(ValidateInfo validateInfo, AgencyKey agencyKey) {
@@ -41,7 +41,9 @@ public class ValidateService {
         return validateDomainService.hmacSHA256(target, agencyKey.keyString());
     }
 
-    public boolean isSiteIdStartWithInitial(AgencyId agencyId, SiteId siteId) {
-        return validateDomainService.isSiteIdStartWithInitial(agencyId.toString(), siteId.toString());
+    public void isSiteIdStartWithInitial(AgencyId agencyId, SiteId siteId) {
+        if (!validateDomainService.isSiteIdStartWithInitial(agencyId.toString(), siteId.toString())) {
+            throw new InvalidSiteIdInitialException(EnumResultCode.IllegalArgument, agencyId.toString(), siteId.toString());
+        }
     }
 }

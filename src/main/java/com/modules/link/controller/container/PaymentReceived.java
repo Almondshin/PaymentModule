@@ -1,16 +1,17 @@
 package com.modules.link.controller.container;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 @Getter
+@ToString
 public class PaymentReceived {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     @NotBlank(message = "Agency ID는 필수값 입니다.")
     private String agencyId;
 
@@ -21,8 +22,11 @@ public class PaymentReceived {
     private String rateSel;
     private String startDate;
 
+//    public LocalDate getStartDate(){
+//        return LocalDate.parse(this.startDate, DATE_FORMATTER);
+//    }
 
-    public LocalDate getStartDate(){
-        return LocalDate.parse(this.startDate, DATE_FORMATTER);
+    public PaymentReceived() {
+        this.site
     }
 }
