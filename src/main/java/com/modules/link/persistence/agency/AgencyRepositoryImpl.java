@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Repository
-public class AgencyRepositoryImpl extends BaseRepository<Agency, SiteId, AgencyJpaRepository> implements AgencyRepository {
+class AgencyRepositoryImpl extends BaseRepository<Agency, SiteId, AgencyJpaRepository> implements AgencyRepository {
 
     private final SiteJpaRepository siteRepository;
     private final AgencyKeyJpaRepository agencyKeyRepository;
@@ -22,8 +22,7 @@ public class AgencyRepositoryImpl extends BaseRepository<Agency, SiteId, AgencyJ
     @Transactional
     @Override
     public Agency find(SiteId id) {
-        Optional<Agency> agency = repository.findById(id);
-        return agency.orElse(null);
+        return repository.findBySiteId(id);
     }
 
     @Transactional

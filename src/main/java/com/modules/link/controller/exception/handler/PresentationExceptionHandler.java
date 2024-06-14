@@ -1,6 +1,7 @@
 package com.modules.link.controller.exception.handler;
 
 import com.modules.link.domain.exception.IllegalAgencyIdSiteIdException;
+import com.modules.link.domain.exception.NoExtensionException;
 import com.modules.link.service.exception.*;
 import com.modules.link.domain.exception.NullAgencyIdSiteIdException;
 import com.modules.link.enums.EnumAgency;
@@ -130,6 +131,18 @@ public class PresentationExceptionHandler {
         logger.info("[Exception ResultCode] : [" + responseMessage.getResultCode() + "]");
         logger.info("[Exception ResultMsg] : [" + responseMessage.getResultMsg() + "]");
         logger.info("E ------------------------------[Exception] - [EntityNotFoundException] ------------------------------ E");
+//        log.error("Exception: MessageTypeException, resultCode: {}, resultMsg: {}", responseMessage.getResultCode(), responseMessage.getResultMsg());
+//        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(NoExtensionException.class)
+    public ResponseEntity<?> NoExtensionException(NoExtensionException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(ex.getEnumResultCode().getCode(), ex.getEnumResultCode().getMessage());
+        logger.info("S ------------------------------[Exception] - [NoExtensionException] ------------------------------ S");
+        logger.info("[Exception ResultCode] : [" + responseMessage.getResultCode() + "]");
+        logger.info("[Exception ResultMsg] : [" + responseMessage.getResultMsg() + "]");
+        logger.info("E ------------------------------[Exception] - [NoExtensionException] ------------------------------ E");
 //        log.error("Exception: MessageTypeException, resultCode: {}, resultMsg: {}", responseMessage.getResultCode(), responseMessage.getResultMsg());
 //        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(responseMessage, HttpStatus.OK);

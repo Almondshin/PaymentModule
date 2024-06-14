@@ -1,14 +1,11 @@
 package com.modules.link.service.validate;
 
-import com.modules.link.service.exception.HmacException;
-import com.modules.link.service.exception.InvalidSiteIdInitialException;
-import com.modules.link.service.exception.MessageTypeException;
-import com.modules.link.domain.agency.AgencyId;
-import com.modules.link.domain.agency.AgencyKey;
-import com.modules.link.domain.agency.SiteId;
 import com.modules.link.domain.validate.ValidateInfo;
 import com.modules.link.domain.validate.service.ValidateDomainService;
 import com.modules.link.enums.EnumResultCode;
+import com.modules.link.service.exception.HmacException;
+import com.modules.link.service.exception.InvalidSiteIdInitialException;
+import com.modules.link.service.exception.MessageTypeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +15,8 @@ public class ValidateService {
 
     private final ValidateDomainService validateDomainService;
 
-    public void validateHmacAndMsgType(ValidateInfo validateInfo, AgencyKey agencyKey) {
-        String keyString = agencyKey.keyString();
-        String originalMessage = validateDomainService.originalMessage(validateInfo.getEncryptDate(), agencyKey.getKey(), agencyKey.getIv());
+    public void validateHmacAndMsgType(ValidateInfo validateInfo, String keyString, String key, String iv) {
+        String originalMessage = validateDomainService.originalMessage(validateInfo.getEncryptDate(), key, iv);
         if (!validateDomainService.verifyHmacSHA256(originalMessage, validateInfo.getVerifyInfo(), keyString)) {
             throw new HmacException(EnumResultCode.HmacError);
         }
@@ -29,21 +25,21 @@ public class ValidateService {
         }
     }
 
-    public String originalMessage(ValidateInfo validateInfo, AgencyKey agencyKey) {
-        return validateDomainService.originalMessage(validateInfo.getEncryptDate(), agencyKey.getKey(), agencyKey.getIv());
+    public String originalMessage(ValidateInfo validateInfo, String key, String iv) {
+        return validateDomainService.originalMessage(validateInfo.getEncryptDate(), key, iv);
     }
 
-    public String encryptData(String encryptData, AgencyKey agencyKey) {
-        return validateDomainService.encryptData(encryptData, agencyKey.getKey(), agencyKey.getIv());
+    public String encryptData(String encryptData, String key, String iv) {
+        return validateDomainService.encryptData(encryptData, key, iv);
     }
 
-    public String hmacSHA256(String target, AgencyKey agencyKey) {
-        return validateDomainService.hmacSHA256(target, agencyKey.keyString());
+    public String hmacSHA256(String target, String keyString) {
+        return validateDomainService.hmacSHA256(target, keyString);
     }
 
-    public void isSiteIdStartWithInitial(AgencyId agencyId, SiteId siteId) {
-        if (!validateDomainService.isSiteIdStartWithInitial(agencyId.toString(), siteId.toString())) {
-            throw new InvalidSiteIdInitialException(EnumResultCode.IllegalArgument, agencyId.toString(), siteId.toString());
+    public void isSiteIdStartWithInitial(String agencyId, String siteId) {
+        if (!validateDomainService.isSiteIdStartWithInitial(agencyId, siteId)) {
+            throw new InvalidSiteIdInitialException(EnumResultCode.IllegalArgument, agencyId, siteId);
         }
     }
 }

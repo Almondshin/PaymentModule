@@ -4,15 +4,16 @@ import com.modules.base.domain.DomainEntity;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Getter
 @Entity
+@ToString
 @NoArgsConstructor
+@Table(name = "AGENCY_PRODUCTS")
 public class Product extends DomainEntity<Product, RateSel> {
 
     @Id
@@ -33,4 +34,16 @@ public class Product extends DomainEntity<Product, RateSel> {
     private String feePerCase;
     @Column(name = "EXCESS_PER_CASE")
     private String excessPerCase;
+
+    @Builder
+    public Product(RateSel id, String agencyId, String name, String price, String offer, String month, String feePerCase, String excessPerCase) {
+        this.id = id;
+        this.agencyId = agencyId;
+        this.name = name;
+        this.price = price;
+        this.offer = offer;
+        this.month = month;
+        this.feePerCase = feePerCase;
+        this.excessPerCase = excessPerCase;
+    }
 }

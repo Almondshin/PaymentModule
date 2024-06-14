@@ -29,9 +29,9 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
     private String agencyUrl;
     @Column(name = "AGENCY_PRODUCT_TYPE")
     private String productList;
+    @Getter
     @Column(name = "BILLING_BASE")
     private String billingBase;
-
 
     public String keyString() {
         return this.id.toString();
@@ -44,32 +44,5 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
     public String getIv() {
         return this.agencyIv;
     }
-
-//    public List<String> getProductList(String agencyId) {
-//        List<String> productList = new ArrayList<>();
-//        for (String product : this.productList.split(",")) {
-//            if (product.startsWith(agencyId)) {
-//                productList.add(product);
-//            }
-//        }
-//        return productList;
-//    }
-
-
-//    public String getAgencyURL(String type) {
-//        Map<String, String> agencyMap = Utils.jsonStringToObject(this.agencyUrl, Map.class);
-//        if (agencyMap == null || agencyMap.isEmpty()) {
-//            throw new IllegalStateException("Agency URL is null or empty");
-//        }
-//        switch (type) {
-//            case "PAYMENT":
-//                return agencyMap.get("NotifyPaymentSiteInfo");
-//            case "STATUS":
-//                return agencyMap.get("NotifyStatusSite");
-//            default:
-//                throw new IllegalStateException("'" + type + "'는 존재하지 않는 타입 입니다.");
-//        }
-//    }
-
 
 }

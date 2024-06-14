@@ -13,28 +13,25 @@ import java.util.Date;
 public class VBank extends ValueObject<VBank> {
 
     @Column(name = "VBANK_NAME")
-    private String vbankName;
-    @Column(name = "VBANK_CODE")
-    private String vbankCode;
+    private String vBankName;
     @Column(name = "VBANK_ACCOUNT")
-    private String vbankAccount;
-    @Column(name = "VBANK_EXPIRE_DATE")
-    private Date vbankExpireDate;
+    private String vBankAccount;
+    @Column(name = "VBANK_EXPIREDATE")
+    private Date vBankExpireDate;
     @Column(name = "RCPT_NAME")
     private String rcptName;
 
 
     @Override
     protected Object[] getEqualityFields() {
-        return new Object[]{vbankName, vbankCode, vbankAccount, vbankExpireDate, rcptName};
+        return new Object[]{vBankName, vBankAccount, vBankExpireDate, rcptName};
     }
 
     @Builder
-    public VBank(String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, String rcptName) {
-        this.vbankName = vbankName;
-        this.vbankCode = vbankCode;
-        this.vbankAccount = vbankAccount;
-        this.vbankExpireDate = vbankExpireDate;
+    public VBank(String vBankName, String vBankAccount, Date vBankExpireDate, String rcptName) {
+        this.vBankName = vBankName;
+        this.vBankAccount = vBankAccount;
+        this.vBankExpireDate = vBankExpireDate;
         this.rcptName = rcptName;
     }
 }

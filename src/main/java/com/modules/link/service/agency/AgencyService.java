@@ -35,23 +35,13 @@ public class AgencyService {
         this.validator = validator;
     }
 
-
-    @Transactional
-    public Site getSite(SiteId siteId) {
-        return agencyRepository.findSite(siteId);
-    }
-
-    @Transactional
+    @Transactional(readOnly = true)
     public AgencyKey getAgencyKey(AgencyId agencyId) {
         return agencyRepository.findAgencyKey(agencyId);
     }
 
-    @Transactional
-    public Agency getAgency(SiteId siteId) {
-        return agencyRepository.find(siteId);
-    }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public String generateSiteStatusData(SiteId siteId) {
         Agency agency = getAgency(siteId);
         if (Objects.isNull(agency)) {
@@ -60,7 +50,7 @@ public class AgencyService {
         return agencyDomainService.generateTargetData(agency, STATUS_TYPE);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public String generateCancelData(SiteId siteId) {
         Agency agency = getAgency(siteId);
         if (Objects.isNull(agency)) {
@@ -69,11 +59,10 @@ public class AgencyService {
         return agencyDomainService.generateTargetData(agency, CANCEL_TYPE);
     }
 
-
     @Transactional
     @Validated
     public void save(SiteId siteId, Agency agency) {
-        Site existingSite = getSite(siteId);
+        Site existingSite = agencyRepository.findSite(siteId);
         Agency existingAgency = getAgency(agency.getId());
         agency.addSite(existingAgency, existingSite);
         Set<String> missingFields = validateNotNullFields(agency);
@@ -90,6 +79,10 @@ public class AgencyService {
                 .map(ConstraintViolation::getMessage)
                 .map(Object::toString)
                 .collect(Collectors.toSet());
+    }
+
+    private Agency getAgency(SiteId siteId) {
+        return agencyRepository.find(siteId);
     }
 
 

@@ -10,12 +10,14 @@ import javax.persistence.Embeddable;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Optional;
 
 @Embeddable
 @NoArgsConstructor
 public class AgencyPayment extends ValueObject<AgencyPayment> {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final String AUTO_PAY = "autopay";
+    @Getter
     @Column(name = "RATE_SEL")
     private String rateSel;
     @Column(name = "SCHEDULED_RATE_SEL")
@@ -32,20 +34,16 @@ public class AgencyPayment extends ValueObject<AgencyPayment> {
         return new Object[]{rateSel, scheduledRateSel, excessCount, startDate, endDate};
     }
 
-    public String getRateSel() {
-        return this.rateSel;
-    }
-
     public boolean isScheduledRateSel() {
         return this.scheduledRateSel != null && this.scheduledRateSel.toLowerCase().contains(AUTO_PAY);
     }
 
-    public LocalDate getStartDate(){
-        return LocalDate.parse(this.startDate.toString(), DATE_FORMATTER);
+    public Optional<LocalDate> getStartDate() {
+        return Optional.ofNullable(startDate).map(date -> LocalDate.parse(date.toString(), DATE_FORMATTER));
     }
 
-    public LocalDate getEndDate(){
-        return LocalDate.parse(this.endDate.toString(), DATE_FORMATTER);
+    public Optional<LocalDate> getEndDate() {
+        return Optional.ofNullable(endDate).map(date -> LocalDate.parse(date.toString(), DATE_FORMATTER));
     }
 
     @Builder

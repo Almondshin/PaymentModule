@@ -1,64 +1,89 @@
 package com.modules.link.domain.payment.service;
 
-import com.modules.link.controller.container.PaymentReceived;
-import com.modules.link.domain.agency.Agency;
+import com.modules.link.domain.exception.NoExtensionException;
+import com.modules.link.domain.payment.Payment;
+import com.modules.link.domain.payment.StatDay;
+import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
+import com.modules.link.enums.EnumResultCode;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class PaymentDomainService {
 
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public String decideRateSel(Agency agency, PaymentReceived receivedData) {
-        String rateSel = receivedData.getRateSel() != null && !receivedData.getRateSel().isEmpty()
-                ? receivedData.getRateSel()
-                : agency.getAgencyPayment().getRateSel() != null
-                ? agency.getAgencyPayment().getRateSel() : null;
-
-        if (rateSel == null) {
-            throw new RuntimeException("Rate selection is null.");
-        }
-
-        return rateSel;
+    public String decideRateSel(String receivedRateSel, String existingRateSel) {
+        return receivedRateSel != null && !receivedRateSel.isEmpty() ? receivedRateSel : existingRateSel;
     }
 
-    public LocalDate decideStartDate(Agency agency, PaymentReceived receivedData) {
-        LocalDate agencyStartDate = agency.getAgencyPayment().getStartDate();
-        LocalDate receivedStartDate = receivedData.getStartDate();
+    public String decideStartDate(String receivedStartDate, LocalDate existingStartDate, LocalDate existingEndDate, String extensionStatus) {
+        LocalDate now = LocalDate.now();
+        LocalDate startDate = makeLocalDate(receivedStartDate);
 
-        if (agency.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
-            if (agencyStartDate != null) {
-                return agencyStartDate;
-            }
-            if (receivedStartDate != null) {
-                return receivedStartDate;
+        if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode())) {
+            if (existingStartDate != null) {
+                return existingStartDate.format(DATE_FORMATTER);
             }
         }
-
-        if (agency.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            LocalDate agencyEndDate = agency.getAgencyPayment().getEndDate();
-            LocalDate fifteenDaysBeforeExpiration = agencyEndDate.minusDays(15);
-            LocalDate yesterday = LocalDate.now().minusDays(1);
-
-            if (receivedStartDate != null) {
-                if (!receivedStartDate.isBefore(fifteenDaysBeforeExpiration) && !receivedStartDate.isBefore(yesterday)) {
-                    return receivedStartDate;
-                } else {
-                    throw new RuntimeException("Invalid start date.");
-                }
-            } else {
-                return agencyEndDate.plusDays(1);
+        if (extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+            LocalDate fifteenDaysBeforeExpiration = existingEndDate.minusDays(15);
+            if (receivedStartDate == null) {
+                return now.format(DATE_FORMATTER);
             }
+            if (startDate.isBefore(fifteenDaysBeforeExpiration)) {
+                throw new NoExtensionException(EnumResultCode.NoExtension);
+            }
+            return receivedStartDate;
+        }
+        if (extensionStatus.equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
+            throw new NoExtensionException(EnumResultCode.NoExtension);
         }
 
-        if (agency.getExtensionStatus().equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
-            //TODO
-            // 연장 불가능 상태 입니다.
-//            throw new NoExtensionException(EnumResultCode.NoExtension, clientInfo.getSiteId());
-        }
-
-        throw new RuntimeException("Unable to decide start date.");
+        throw new RuntimeException("Invalid extension status: " + extensionStatus);
     }
+
+    private LocalDate makeLocalDate(String date) {
+        return LocalDate.parse(date, DATE_FORMATTER);
+    }
+
+
+    public int excessAmount(Payment payment, String billingBase, List<StatDay> statDays) {
+        int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
+        int excessCount = offer - useCount(statDays,billingBase);
+
+        return 0;
+    }
+
+    public Optional<Payment> excessPayment(List<Payment> payment) {
+//        if (payment.size() < 2) {
+//            return Optional.empty();
+//        }
+        return Optional.of(payment.get(0));
+    }
+
+
+    public int excessCount(Payment payment, String billingBase, LocalDate startDate, LocalDate endDate, int useCount) {
+        String startDateStr = startDate.format(DATE_FORMATTER);
+        String endDateStr = endDate.format(DATE_FORMATTER);
+        int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
+        int excessCount = offer - useCount;
+        return excessCount < 0 ? Math.abs(excessCount) : 0;
+    }
+
+    private int useCount(List<StatDay> statDays, String billingBase) {
+        if (billingBase.equals(EnumBillingBase.INCOMPLETE.getCode())) {
+            return statDays.stream().mapToInt(StatDay::getIncompleteCount).sum();
+        }
+        if (billingBase.equals(EnumBillingBase.SUCCESS_FINAL.getCode())) {
+            return statDays.stream().mapToInt(StatDay::getSuccessFinalCount).sum();
+        }
+        return 0;
+    }
+
 }

@@ -45,22 +45,25 @@ public class AgencyController {
     public ResponseEntity<AgencyResponse> getStatus(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
+        String keyString = agencyKey.keyString();
+        String key = agencyKey.getKey();
+        String iv = agencyKey.getIv();
         ValidateInfo validateInfo = ValidateInfo.builder()
                 .messageType(receivedData.getMsgType())
                 .encryptDate(receivedData.getEncryptData())
                 .verifyInfo(receivedData.getVerifyInfo())
                 .build();
-        validateService.validateHmacAndMsgType(validateInfo, agencyKey);
+        validateService.validateHmacAndMsgType(validateInfo, keyString, key, iv);
 
-        String originalMessage = validateService.originalMessage(validateInfo, agencyKey);
+        String originalMessage = validateService.originalMessage(validateInfo, key, iv);
         StatusInfo statusInfo = Utils.jsonStringToObject(originalMessage, StatusInfo.class);
-        validateService.isSiteIdStartWithInitial(agencyId, statusInfo.getSiteId());
+        validateService.isSiteIdStartWithInitial(agencyId.toString(), statusInfo.getSiteId().toString());
 
         String targetData = agencyService.generateSiteStatusData(statusInfo.getSiteId());
         return ResponseEntity.ok(
                 AgencyResponse.builder()
-                        .encryptData(validateService.encryptData(targetData, agencyKey))
-                        .verifyInfo(validateService.hmacSHA256(targetData, agencyKey))
+                        .encryptData(validateService.encryptData(targetData, key, iv))
+                        .verifyInfo(validateService.hmacSHA256(targetData, keyString))
                         .messageType(EnumAgency.getMsgType(agencyKey.keyString(), SITE_INFO))
                         .build());
     }
@@ -71,16 +74,18 @@ public class AgencyController {
     public ResponseEntity<AgencyResponse> save(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
+        String key = agencyKey.getKey();
+        String iv = agencyKey.getIv();
         ValidateInfo validateInfo = ValidateInfo.builder()
                 .messageType(receivedData.getMsgType())
                 .encryptDate(receivedData.getEncryptData())
                 .verifyInfo(receivedData.getVerifyInfo())
                 .build();
-        validateService.validateHmacAndMsgType(validateInfo, agencyKey);
+        validateService.validateHmacAndMsgType(validateInfo, agencyKey.keyString(), key, iv);
 
-        String originalMessage = validateService.originalMessage(validateInfo, agencyKey);
+        String originalMessage = validateService.originalMessage(validateInfo, key, iv);
         RegisterInfo registerInfo = Utils.jsonStringToObject(originalMessage, RegisterInfo.class);
-        validateService.isSiteIdStartWithInitial(agencyId, registerInfo.getSiteId());
+        validateService.isSiteIdStartWithInitial(agencyId.toString(), registerInfo.getSiteId().toString());
 
         agencyService.save(new SiteId(registerInfo.getSiteId().toString()), AgencyMapper.toAgency(registerInfo));
 
@@ -93,16 +98,18 @@ public class AgencyController {
     public ResponseEntity<AgencyResponse> cancel(@RequestBody AgencyReceived receivedData) {
         AgencyId agencyId = AgencyId.of(receivedData.getAgencyId());
         AgencyKey agencyKey = agencyService.getAgencyKey(agencyId);
+        String key = agencyKey.getKey();
+        String iv = agencyKey.getIv();
         ValidateInfo validateInfo = ValidateInfo.builder()
                 .messageType(receivedData.getMsgType())
                 .encryptDate(receivedData.getEncryptData())
                 .verifyInfo(receivedData.getVerifyInfo())
                 .build();
-        validateService.validateHmacAndMsgType(validateInfo, agencyKey);
+        validateService.validateHmacAndMsgType(validateInfo, agencyKey.keyString(), key, iv);
 
-        String originalMessage = validateService.originalMessage(validateInfo, agencyKey);
+        String originalMessage = validateService.originalMessage(validateInfo, key, iv);
         CancelInfo cancelInfo = Utils.jsonStringToObject(originalMessage, CancelInfo.class);
-        validateService.isSiteIdStartWithInitial(agencyId, cancelInfo.getSiteId());
+        validateService.isSiteIdStartWithInitial(agencyId.toString(), cancelInfo.getSiteId().toString());
 
         String targetData = agencyService.generateCancelData(cancelInfo.getSiteId());
         notifier.sendNotification(profileSpecificAdminUrl + CANCEL_API, targetData);

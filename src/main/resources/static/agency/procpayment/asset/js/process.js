@@ -37,7 +37,6 @@ const init = function () {
         preInputParameter[key] = utils.getParam(key)
     }
 
-
     process.getPaymentInfo();
 }
 
@@ -56,7 +55,6 @@ const process = {
     , selectedProduct   : {}
     , getPaymentInfo    : function () {
         const request = new XMLHttpRequest();
-        // request.open("POST", BASE_URL + "/agency/payment/getPaymentInfo", false);
         request.open("POST", "/agency/payment/getPaymentInfo", false);
         request.setRequestHeader("Content-type", "application/json");
 
@@ -82,12 +80,7 @@ const process = {
             }
 
             [companyName, bizNumber, ceoName] = response.clientInfo.split(",");
-            //변경부분
-            // setInformation_4({
-            //     companyName: companyName,
-            //     bizNum     : bizNumber,
-            //     userName   : ceoName
-            // })
+
             payment.setText("info", "companyName", companyName);
             payment.setValue("info", "companyName", companyName);
             payment.setText("info", "bizName", bizNumber);
@@ -114,6 +107,7 @@ const process = {
                 }
             })
 
+            console.log("response.startDate :" + response.startDate);
 
             if (response.profileUrl != null) {
                 profileSpecificUrl = response.profileUrl;

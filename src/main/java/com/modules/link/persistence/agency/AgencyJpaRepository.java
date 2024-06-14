@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Lock;
 
 import javax.persistence.LockModeType;
 
-public interface AgencyJpaRepository extends JpaRepository<Agency, SiteId> {
-    @Lock(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
+interface AgencyJpaRepository extends JpaRepository<Agency, SiteId> {
     Agency findBySiteId(SiteId siteId);
 }

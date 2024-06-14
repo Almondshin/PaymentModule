@@ -18,4 +18,15 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+
+<!--    &lt;!&ndash; Hibernate SQL logging &ndash;&gt;
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="org.hibernate.type" level="TRACE" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>-->
 </configuration>

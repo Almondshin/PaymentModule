@@ -7,30 +7,32 @@ import lombok.Getter;
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PaymentResponse {
-    private final String resultCode;
-    private final String resultMsg;
-    private String msgType;
-    private String encryptData;
-    private String verifyInfo;
+public class PaymentResponse<T> {
+    private T body;
+    private String message;
 
-    public PaymentResponse(){
-        this.resultCode = EnumResultCode.SUCCESS.getCode();
-        this.resultMsg = EnumResultCode.SUCCESS.getMessage();
+    private PaymentResponse(T body) {
+        this.body = body;
     }
 
-    @Builder
-    public PaymentResponse(String encryptData, String verifyInfo, String messageType) {
-        this.resultCode = EnumResultCode.SUCCESS.getCode();
-        this.resultMsg = EnumResultCode.SUCCESS.getMessage();
-        this.msgType = messageType;
-        this.encryptData = encryptData;
-        this.verifyInfo = verifyInfo;
+    private PaymentResponse(String message) {
+        this.message = message;
     }
 
-    public PaymentResponse(String code, String message) {
-        this.resultCode = code;
-        this.resultMsg = message;
+    public String getMessage() {
+        return message;
+    }
+
+    public T getBody() {
+        return body;
+    }
+
+    public static <T> PaymentResponse<T> success(T body) {
+        return new PaymentResponse<>(body);
+    }
+
+    public static PaymentResponse<Void> error(String message) {
+        return new PaymentResponse<>(message);
     }
 
 }
