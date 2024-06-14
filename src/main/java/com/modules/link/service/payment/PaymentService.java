@@ -2,10 +2,7 @@ package com.modules.link.service.payment;
 
 import com.modules.link.domain.agency.*;
 import com.modules.link.domain.exception.NoExtensionException;
-import com.modules.link.domain.payment.Payment;
-import com.modules.link.domain.payment.PaymentRepository;
-import com.modules.link.domain.payment.Product;
-import com.modules.link.domain.payment.StatDay;
+import com.modules.link.domain.payment.*;
 import com.modules.link.domain.payment.service.PaymentDomainService;
 import com.modules.link.enums.EnumExtraAmountStatus;
 import com.modules.link.enums.EnumResultCode;
@@ -81,30 +78,54 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public int excessAmount(String siteId) {
+    public double excessAmount(String siteId) {
         Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
-
-
         if (excessPayment == null) {
             return 0;
         }
-        System.out.println("excessPayment.getPaymentDetails().getRateSel() : " + excessPayment.getRateSel());
-
         String startDate = excessPayment.getPaymentPeriod().getStartDate();
         String endDate = excessPayment.getPaymentPeriod().getEndDate();
         List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
         AgencyKey agencyKey = agencyRepository.findAgencyKey(excessPayment.getAgencyId());
         String billingBase = agencyKey.getBillingBase();
-        List<Product> products = excessPayment.getProducts();
+        List<Product> productList = excessPayment.getProducts();
 
-        System.out.println("Products: " + products);
+        Product product = productList.stream()
+                .filter(p -> p.getId().equals(excessPayment.getRateSel()))
+                .map(p -> Product.builder()
+                        .id(p.getId())
+                        .agencyId(p.getAgencyId())
+                        .name(p.getName())
+                        .price(p.getPrice())
+                        .offer(p.getOffer())
+                        .month(p.getMonth())
+                        .feePerCase(p.getFeePerCase())
+                        .excessPerCase(p.getExcessPerCase())
+                        .build())
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + excessPayment.getRateSel()));
 
-        for (Product product : products) {
-            System.out.println("Product ID: " + product.getId() + ", Name: " + product.getName());
-        }
+
+        System.out.println("product: " + product);
 
         System.out.println("excessPayment.getAgency() : " + excessPayment.getAgency().getId().toString());
-        return paymentDomainService.excessAmount(excessPayment, billingBase, statDays);
+        return paymentDomainService.excessAmount(excessPayment, product, billingBase, statDays);
+    }
+
+    @Transactional(readOnly = true)
+    public int excessCount(String siteId) {
+        Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
+        if (excessPayment == null) {
+            return 0;
+        }
+        String startDate = excessPayment.getPaymentPeriod().getStartDate();
+        String endDate = excessPayment.getPaymentPeriod().getEndDate();
+        List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
+        AgencyKey agencyKey = agencyRepository.findAgencyKey(excessPayment.getAgencyId());
+        String billingBase = agencyKey.getBillingBase();
+
+        System.out.println("excessPayment.getAgency() : " + excessPayment.getAgency().getId().toString());
+        return paymentDomainService.excessCount(excessPayment, billingBase, statDays);
     }
 
 

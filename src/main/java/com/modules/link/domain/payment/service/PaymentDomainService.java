@@ -2,6 +2,7 @@ package com.modules.link.domain.payment.service;
 
 import com.modules.link.domain.exception.NoExtensionException;
 import com.modules.link.domain.payment.Payment;
+import com.modules.link.domain.payment.Product;
 import com.modules.link.domain.payment.StatDay;
 import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
@@ -53,27 +54,25 @@ public class PaymentDomainService {
     }
 
 
-    public int excessAmount(Payment payment, String billingBase, List<StatDay> statDays) {
-        int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
-        int excessCount = offer - useCount(statDays,billingBase);
-
-        return 0;
-    }
-
     public Optional<Payment> excessPayment(List<Payment> payment) {
-//        if (payment.size() < 2) {
-//            return Optional.empty();
-//        }
-        return Optional.of(payment.get(0));
+        if (payment.size() < 2) {
+            return Optional.empty();
+        }
+        return Optional.of(payment.get(1));
     }
 
 
-    public int excessCount(Payment payment, String billingBase, LocalDate startDate, LocalDate endDate, int useCount) {
-        String startDateStr = startDate.format(DATE_FORMATTER);
-        String endDateStr = endDate.format(DATE_FORMATTER);
+    public int excessCount(Payment payment, String billingBase, List<StatDay> statDays) {
         int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
-        int excessCount = offer - useCount;
+        int excessCount = offer - useCount(statDays, billingBase);
         return excessCount < 0 ? Math.abs(excessCount) : 0;
+    }
+
+    public int excessAmount(Payment payment, Product product, String billingBase, List<StatDay> statDays) {
+        int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
+        int excessCount = offer - useCount(statDays, billingBase);
+        int excessPerCase = Integer.parseInt(product.getExcessPerCase());
+        return excessCount > 0 ? (int) Math.floor(excessCount * excessPerCase * 1.1) : 0;
     }
 
     private int useCount(List<StatDay> statDays, String billingBase) {
