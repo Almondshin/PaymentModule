@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PaymentService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
     private final AgencyRepository agencyRepository;
     private final PaymentDomainService paymentDomainService;
@@ -74,7 +75,25 @@ public class PaymentService {
         return paymentRepository.findBySiteId(SiteId.of(siteId)).stream()
                 .filter(e -> e.getPaymentDetails().getTrTrace().equals(EnumTradeTrace.USED.getCode()))
                 .filter(e -> e.getPaymentDetails().getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                .sorted(Comparator.comparing(Payment::getRegDate).reversed())
                 .collect(Collectors.toList());
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public int excessCount(String siteId) {
+        Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
+        if (excessPayment == null) {
+            return 0;
+        }
+        String startDate = excessPayment.getPaymentPeriod().getStartDate();
+        String endDate = excessPayment.getPaymentPeriod().getEndDate();
+        List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
+        AgencyKey agencyKey = agencyRepository.findAgencyKey(excessPayment.getAgencyId());
+        String billingBase = agencyKey.getBillingBase();
+
+        return paymentDomainService.excessCount(excessPayment, billingBase, statDays);
     }
 
     @Transactional(readOnly = true)
@@ -105,29 +124,8 @@ public class PaymentService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + excessPayment.getRateSel()));
 
-
-        System.out.println("product: " + product);
-
-        System.out.println("excessPayment.getAgency() : " + excessPayment.getAgency().getId().toString());
         return paymentDomainService.excessAmount(excessPayment, product, billingBase, statDays);
     }
-
-    @Transactional(readOnly = true)
-    public int excessCount(String siteId) {
-        Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
-        if (excessPayment == null) {
-            return 0;
-        }
-        String startDate = excessPayment.getPaymentPeriod().getStartDate();
-        String endDate = excessPayment.getPaymentPeriod().getEndDate();
-        List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
-        AgencyKey agencyKey = agencyRepository.findAgencyKey(excessPayment.getAgencyId());
-        String billingBase = agencyKey.getBillingBase();
-
-        System.out.println("excessPayment.getAgency() : " + excessPayment.getAgency().getId().toString());
-        return paymentDomainService.excessCount(excessPayment, billingBase, statDays);
-    }
-
 
 //    @Transactional(readOnly = true)
 //    public Agency getAgencyByPaymentId(PGTradeNum paymentId) {

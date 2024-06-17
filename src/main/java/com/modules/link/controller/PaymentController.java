@@ -48,7 +48,8 @@ public class PaymentController {
                 .map(String::toUpperCase)
                 .orElse("");
         paymentService.isScheduled(siteId);
-        paymentService.excessAmount(siteId);
+        System.out.println("paymentService.excessCount(siteId) : " + paymentService.excessCount(siteId));
+        System.out.println("paymentService.excessAmount(siteId) : " + paymentService.excessAmount(siteId));
         return ResponseEntity.ok(PaymentResponse.success("응답 데이터 조형"));
     }
 

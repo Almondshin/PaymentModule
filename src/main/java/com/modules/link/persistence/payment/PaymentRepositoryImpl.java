@@ -29,6 +29,7 @@ class PaymentRepositoryImpl extends BaseRepository<Payment, PGTradeNum, PaymentJ
     @Transactional
     @Override
     public List<StatDay> findAllByFromDateBetweenAndId(String startDate, String endDate, SiteId siteId) {
+        System.out.println("시작일 종료일 검증 : "+  startDate + " " + endDate);
         return statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, siteId);
     }
 

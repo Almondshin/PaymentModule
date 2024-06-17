@@ -3,16 +3,16 @@ package com.modules.link.domain.payment;
 import com.modules.base.domain.DomainEntity;
 import com.modules.link.domain.agency.SiteId;
 import lombok.Getter;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@ToString
 @Table(name = "STAT_DAY")
+@IdClass(StatDayCompositeId.class)
 public class StatDay extends DomainEntity<StatDay, SiteId> {
 
     @Id
@@ -21,6 +21,8 @@ public class StatDay extends DomainEntity<StatDay, SiteId> {
     @Column(name = "SITE_ID", nullable = false)
     private SiteId id;
 
+    @Id
+    @Getter
     @Column(name = "FROM_DATE")
     private String fromDate;
     @Column(name = "PROVIDER_ID")

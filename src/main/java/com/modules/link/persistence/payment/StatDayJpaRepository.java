@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface StatDayJpaRepository extends JpaRepository<StatDay, SiteId> {
-    List<StatDay> findAllByFromDateBetweenAndId(String start, String end, SiteId siteId);
+    List<StatDay> findAllByFromDateBetweenAndId(String startDate, String endDate, SiteId siteId);
 }
