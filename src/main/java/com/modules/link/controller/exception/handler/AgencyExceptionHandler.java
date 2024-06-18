@@ -20,7 +20,7 @@ import javax.persistence.EntityExistsException;
 
 @Slf4j
 @RestControllerAdvice
-public class PresentationExceptionHandler {
+public class AgencyExceptionHandler {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Getter

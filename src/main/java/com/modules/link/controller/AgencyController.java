@@ -12,7 +12,7 @@ import com.modules.link.domain.agency.AgencyKey;
 import com.modules.link.domain.agency.SiteId;
 import com.modules.link.domain.validate.ValidateInfo;
 import com.modules.link.enums.EnumAgency;
-import com.modules.link.infrastructure.Notifier;
+import com.modules.link.infrastructure.notification.NotificationSender;
 import com.modules.link.service.agency.AgencyService;
 import com.modules.link.service.validate.ValidateService;
 import com.modules.link.utils.Utils;
@@ -36,7 +36,7 @@ public class AgencyController {
 
     private final AgencyService agencyService;
     private final ValidateService validateService;
-    private final Notifier notifier;
+    private final NotificationSender notificationSender;
 
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
@@ -90,7 +90,7 @@ public class AgencyController {
         agencyService.save(new SiteId(registerInfo.getSiteId().toString()), AgencyMapper.toAgency(registerInfo));
 
         String registerMessage = new RegisterNotification(registerInfo.getSiteId(), registerInfo.getAgencyId(), registerInfo.getSiteName()).makeNotification();
-        notifier.sendNotification(profileSpecificAdminUrl + REGISTER_API, registerMessage);
+        notificationSender.sendNotification(profileSpecificAdminUrl + REGISTER_API, registerMessage);
         return ResponseEntity.ok(new AgencyResponse());
     }
 
@@ -112,7 +112,7 @@ public class AgencyController {
         validateService.isSiteIdStartWithInitial(agencyId.toString(), cancelInfo.getSiteId().toString());
 
         String targetData = agencyService.generateCancelData(cancelInfo.getSiteId());
-        notifier.sendNotification(profileSpecificAdminUrl + CANCEL_API, targetData);
+        notificationSender.sendNotification(profileSpecificAdminUrl + CANCEL_API, targetData);
         return ResponseEntity.ok(new AgencyResponse());
     }
 

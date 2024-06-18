@@ -55,7 +55,7 @@ const process = {
     , selectedProduct   : {}
     , getPaymentInfo    : function () {
         const request = new XMLHttpRequest();
-        request.open("POST", "/agency/payment/getPaymentInfo", false);
+        request.open("POST", "/agency/payment/getPayment", false);
         request.setRequestHeader("Content-type", "application/json");
 
         request.onreadystatechange = function () {
@@ -65,12 +65,14 @@ const process = {
                 profileUrl       : "",
                 profilePaymentUrl: "",
                 resultCode       : "",
+                resultMsg        : "",
                 excessAmount     : "",
                 extensionStatus  : "",
             }
+
             response = JSON.parse(this.response);
-            console.log(response);
-            if (response.resultCode !== "2000") {
+
+            if (this.status !== 200 || (response.resultCode != null && response.resultCode !== "2000")) {
                 process.alert({
                     main: response.resultMsg,
                     sub : "오류코드 : " + response.resultCode,
@@ -79,7 +81,12 @@ const process = {
                 return;
             }
 
-            [companyName, bizNumber, ceoName] = response.clientInfo.split(",");
+            response = JSON.parse(this.response).body;
+            console.log(this.response);
+
+
+            [companyName, bizNumber, ceoName] = response.clientInfo;
+
 
             payment.setText("info", "companyName", companyName);
             payment.setValue("info", "companyName", companyName);
@@ -88,22 +95,17 @@ const process = {
             payment.setText("info", "name", ceoName);
             payment.setValue("info", "name", ceoName);
 
-            //변경부분
-            // let productDatalist = []; 제거
-
             Array.prototype.forEach.call(response.listSel, function (el, index) {
                 productDatalist[index] = {
-                    //TODO 변경 부분
-                    // index                  : index,
                     index                  : index,
-                    productCode            : el.type,
+                    productCode            : el.id,
                     productName            : el.name,
                     productPrice           : el.price,
                     productDuration        : el.month,
-                    productCount           : el.basicOffer,
+                    productCount           : el.offer,
                     productFeePerCase      : el.feePerCase,
-                    productExcessFeePerCase: el.excessFeePerCase,
-                    productAutopay         : el.type.indexOf("autopay") > -1 ? true : false
+                    productExcessFeePerCase: el.excessPerCase,
+                    productAutopay         : el.id.indexOf("autopay") > -1 ? true : false
                 }
             })
 
@@ -181,9 +183,10 @@ const process = {
     }
     , setPaymentSiteInfo: function () {
         let request = new XMLHttpRequest();
-        request.open("POST", profileSpecificPaymentUrl + "/agency/payment/setPaymentSiteInfo", false);
+        request.open("POST", profileSpecificPaymentUrl + "/agency/payment/setPayment", false);
         request.setRequestHeader("Content-type", "application/json");
         request.onreadystatechange = function () {
+            console.log("this.response : " + this.response)
             process.HFPayment(JSON.parse(this.response))
         }
 
@@ -203,10 +206,11 @@ const process = {
         request.send(JSON.stringify(process.data));
     }
     , HFPayment         : function (response) {
-        if (response.resultCode === "2000") {
-            var mchtName = "상점이름"
-            var mchtEName = "gyMerchantId"
-            var type = "popup"
+        var res = response.body
+        if (res.resultCode === "2000") {
+            var mchtName = res.merchantName;
+            var mchtEName = res.merchantEnglishName;
+            var type = "";
 
             switch (preInputParameter.openType) {
                 case "redirect" : {
@@ -248,26 +252,24 @@ const process = {
                 "&companyName=" + companyName +
                 "&bizNumber=" + bizNumber;
 
-            console.log(mchtParams)
-
+            console.log("mchtParams : " + mchtParams)
 
             SETTLE_PG.pay({
-                env: "https://tbnpg.settlebank.co.kr",   //결제서버 URL
-                // env       : "https://npg.settlebank.co.kr",   //결제서버 URL
+                env      : res.tradeServer,
                 mchtName : mchtName,
                 mchtEName: mchtEName,
                 mchtParam: mchtParams,
                 pmtPrdtNm: this.selectedProduct.productName + "( " + process.data.startDate + " - " + process.data.endDate + " )",
-                mchtId   : response.mchtId,
-                method   : response.method,
-                trdDt    : response.trdDt,
-                trdTm    : response.trdTm,
-                mchtTrdNo: response.mchtTrdNo,
-                trdAmt   : response.encParams.trdAmt,
-                pktHash  : response.hashCipher,
-                notiUrl  : profileSpecificUrl + "/agency/payment/api/result/noti",
-                nextUrl  : profileSpecificUrl + "/agency/payment/api/result/next",
-                cancUrl  : profileSpecificUrl + "/agency/payment/api/result/cancel",
+                mchtId   : res.merchantId,
+                method   : res.method,
+                trdDt    : res.tradeDate,
+                trdTm    : res.tradeTime,
+                mchtTrdNo: res.merchantTradeNum,
+                trdAmt   : res.encryptParams.tradeAmount,
+                pktHash  : res.hashCipher,
+                notiUrl  : res.notifyUrl,
+                nextUrl  : res.nextUrl,
+                cancUrl  : res.cancelUrl,
                 ui       : {
                     type  : type,   //popup, iframe, self, blank
                     width : "430",   //popup창의 너비
@@ -383,7 +385,7 @@ function setSelectedValue(index) {
     }
     process.select()
 
-    if(process.data.excessCount === null || process.data.excessCount === "" ){
+    if (process.data.excessCount === null || process.data.excessCount === "") {
         process.data.excessCount = "0";
     }
     payment.setText("payment", "period", document.querySelector("#datepicker").value + "~" + process.data.endDate)

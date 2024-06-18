@@ -58,10 +58,6 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
     @Column(name = "MOD_DATE")
     private Date modDate;
 
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "AGENCY_ID", referencedColumnName = "AGENCY_ID", insertable = false, updatable = false)
-    private final List<Product> products = new ArrayList<>();
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
     private Agency agency;

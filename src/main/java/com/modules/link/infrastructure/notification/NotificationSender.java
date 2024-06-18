@@ -1,4 +1,4 @@
-package com.modules.link.infrastructure;
+package com.modules.link.infrastructure.notification;
 
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class Notifier {
+public class NotificationSender {
     public String sendNotification(String targetUrl, String responseData) {
         try {
             URL url = new URL(targetUrl);

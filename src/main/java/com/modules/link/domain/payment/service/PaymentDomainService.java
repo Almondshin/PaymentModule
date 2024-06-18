@@ -1,17 +1,20 @@
 package com.modules.link.domain.payment.service;
 
 import com.modules.link.domain.exception.NoExtensionException;
+import com.modules.link.domain.exception.NotFoundProductsException;
 import com.modules.link.domain.payment.Payment;
 import com.modules.link.domain.payment.Product;
 import com.modules.link.domain.payment.StatDay;
 import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumResultCode;
+import com.modules.link.service.exception.InvalidStartDateException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -19,34 +22,39 @@ public class PaymentDomainService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public String decideRateSel(String receivedRateSel, String existingRateSel) {
-        return receivedRateSel != null && !receivedRateSel.isEmpty() ? receivedRateSel : existingRateSel;
+    public String decideRateSel(String receivedRateSel, String existingRateSel, List<Product> products) {
+        if (receivedRateSel != null && !receivedRateSel.isEmpty()) {
+            return products.stream()
+                    .filter(e -> e.getId().toString().equals(receivedRateSel))
+                    .findFirst()
+                    .map(product -> product.getId().toString())
+                    .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
+        }
+        return (existingRateSel == null) ? "" : existingRateSel;
     }
 
     public String decideStartDate(String receivedStartDate, LocalDate existingStartDate, LocalDate existingEndDate, String extensionStatus) {
         LocalDate now = LocalDate.now();
-        LocalDate startDate = makeLocalDate(receivedStartDate);
-
-        if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode())) {
-            if (existingStartDate != null) {
-                return existingStartDate.format(DATE_FORMATTER);
+        LocalDate startDate;
+        if (receivedStartDate != null && !receivedStartDate.isEmpty()) {
+            startDate = makeLocalDate(receivedStartDate);
+            if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode())) {
+                if (startDate.isBefore(now)) {
+                    throw new InvalidStartDateException(EnumResultCode.NoExtension);
+                }
             }
-        }
-        if (extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            LocalDate fifteenDaysBeforeExpiration = existingEndDate.minusDays(15);
-            if (receivedStartDate == null) {
-                return now.format(DATE_FORMATTER);
+            if (extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+                LocalDate fifteenDaysBeforeExpiration = existingEndDate.minusDays(15);
+                if (startDate.isBefore(fifteenDaysBeforeExpiration)) {
+                    throw new NoExtensionException(EnumResultCode.NoExtension);
+                }
+                return receivedStartDate;
             }
-            if (startDate.isBefore(fifteenDaysBeforeExpiration)) {
+            if (extensionStatus.equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
                 throw new NoExtensionException(EnumResultCode.NoExtension);
             }
-            return receivedStartDate;
         }
-        if (extensionStatus.equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
-            throw new NoExtensionException(EnumResultCode.NoExtension);
-        }
-
-        throw new RuntimeException("Invalid extension status: " + extensionStatus);
+        return Objects.requireNonNullElse(existingStartDate, now).format(DATE_FORMATTER);
     }
 
     private LocalDate makeLocalDate(String date) {
@@ -72,7 +80,7 @@ public class PaymentDomainService {
         int offer = Integer.parseInt(payment.getPaymentDetails().getOffer());
         int excessCount = offer - useCount(statDays, billingBase);
         int excessPerCase = Integer.parseInt(product.getExcessPerCase());
-        return excessCount > 0 ? (int) Math.floor(excessCount * excessPerCase * 1.1) : 0;
+        return excessCount < 0 ? (int) Math.abs(Math.round(excessCount * excessPerCase * 1.1)) : 0;
     }
 
     private int useCount(List<StatDay> statDays, String billingBase) {

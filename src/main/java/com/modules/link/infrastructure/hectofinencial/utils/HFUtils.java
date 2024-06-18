@@ -1,5 +1,6 @@
-package com.modules.link.utils;
+package com.modules.link.infrastructure.hectofinencial.utils;
 
+import com.modules.link.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,7 +9,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-public class PGUtils {
+public class HFUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 

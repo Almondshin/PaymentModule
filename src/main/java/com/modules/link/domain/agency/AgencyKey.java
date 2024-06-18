@@ -6,6 +6,11 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static javax.persistence.GenerationType.IDENTITY;
 
 
@@ -27,6 +32,7 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
 
     @Column(name = "AGENCY_URL")
     private String agencyUrl;
+    @Getter
     @Column(name = "AGENCY_PRODUCT_TYPE")
     private String productList;
     @Getter
@@ -44,5 +50,11 @@ public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
     public String getIv() {
         return this.agencyIv;
     }
+
+    public List<String> getProductList() {
+        return Arrays.stream(productList.split(","))
+                .collect(Collectors.toList());
+    }
+
 
 }
