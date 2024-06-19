@@ -8,11 +8,9 @@ import com.modules.link.domain.payment.StatDay;
 import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumResultCode;
-import com.modules.link.persistence.payment.StatDayJpaRepository;
 import com.modules.link.service.exception.InvalidStartDateException;
 import org.springframework.stereotype.Component;
 
-import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -23,11 +21,6 @@ import java.util.Optional;
 public class PaymentDomainService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private final StatDayJpaRepository statDayJpaRepository;
-
-    public PaymentDomainService(StatDayJpaRepository statDayJpaRepository) {
-        this.statDayJpaRepository = statDayJpaRepository;
-    }
 
     public String decideRateSel(String receivedRateSel, String existingRateSel, List<Product> products) {
         if (receivedRateSel != null && !receivedRateSel.isEmpty()) {
@@ -123,8 +116,8 @@ public class PaymentDomainService {
 
     private boolean isValidPriceAndAmount(LocalDate startDate, Product product, String salesPrice, String offer, int excessAmount, int excessCount) {
         int lastDate = startDate.withDayOfMonth(startDate.lengthOfMonth()).getDayOfMonth();
-        int startDateI = startDate.getDayOfMonth();
-        int durations = lastDate - startDateI + 1;
+        int startDay = startDate.getDayOfMonth();
+        int durations = lastDate - startDay + 1;
         int baseOffer = Integer.parseInt(product.getOffer()) / Integer.parseInt(product.getMonth());
         int basePrice = Integer.parseInt(product.getPrice()) / Integer.parseInt(product.getMonth());
         int month = Integer.parseInt(product.getMonth());
