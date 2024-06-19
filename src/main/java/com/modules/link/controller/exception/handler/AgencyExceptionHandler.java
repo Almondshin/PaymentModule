@@ -1,7 +1,7 @@
 package com.modules.link.controller.exception.handler;
 
 import com.modules.link.domain.exception.IllegalAgencyIdSiteIdException;
-import com.modules.link.domain.exception.NoExtensionException;
+import com.modules.link.service.exception.NoExtensionException;
 import com.modules.link.service.exception.*;
 import com.modules.link.domain.exception.NullAgencyIdSiteIdException;
 import com.modules.link.enums.EnumAgency;

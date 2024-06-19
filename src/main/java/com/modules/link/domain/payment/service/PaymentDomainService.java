@@ -1,14 +1,10 @@
 package com.modules.link.domain.payment.service;
 
-import com.modules.link.domain.exception.NoExtensionException;
-import com.modules.link.domain.exception.NotFoundProductsException;
 import com.modules.link.domain.payment.Payment;
 import com.modules.link.domain.payment.Product;
 import com.modules.link.domain.payment.StatDay;
 import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
-import com.modules.link.enums.EnumResultCode;
-import com.modules.link.service.exception.InvalidStartDateException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -22,40 +18,37 @@ public class PaymentDomainService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    public String decideRateSel(String receivedRateSel, String existingRateSel, List<Product> products) {
+    public Optional<String> decideRateSel(String receivedRateSel, String existingRateSel, List<Product> products) {
         if (receivedRateSel != null && !receivedRateSel.isEmpty()) {
             return products.stream()
                     .filter(e -> e.getId().toString().equals(receivedRateSel))
-                    .findFirst()
-                    .map(product -> product.getId().toString())
-                    .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
+                    .findFirst().map(product -> product.getId().toString());
         }
 
-        return (existingRateSel == null) ? "" : existingRateSel;
+        return Optional.ofNullable(existingRateSel);
     }
-
-    public String decideStartDate(String receivedStartDate, LocalDate existingStartDate, LocalDate existingEndDate, String extensionStatus) {
+    public Optional<String> decideStartDate(String receivedStartDate, LocalDate existingStartDate, LocalDate existingEndDate, String extensionStatus) {
         LocalDate now = LocalDate.now();
         LocalDate startDate;
         if (receivedStartDate != null && !receivedStartDate.isEmpty()) {
             startDate = makeLocalDate(receivedStartDate);
             if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode())) {
                 if (startDate.isBefore(now)) {
-                    throw new InvalidStartDateException(EnumResultCode.NoExtension);
+                    return Optional.empty();
                 }
             }
             if (extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
                 LocalDate fifteenDaysBeforeExpiration = existingEndDate.minusDays(15);
                 if (startDate.isBefore(fifteenDaysBeforeExpiration)) {
-                    throw new NoExtensionException(EnumResultCode.NoExtension);
+                    return Optional.empty();
                 }
-                return receivedStartDate;
+                return Optional.of(receivedStartDate);
             }
             if (extensionStatus.equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
-                throw new NoExtensionException(EnumResultCode.NoExtension);
+                return Optional.empty();
             }
         }
-        return Objects.requireNonNullElse(existingStartDate, now).format(DATE_FORMATTER);
+        return Optional.of(Objects.requireNonNullElse(existingStartDate, now).format(DATE_FORMATTER));
     }
 
     private LocalDate makeLocalDate(String date) {

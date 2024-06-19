@@ -1,7 +1,8 @@
 package com.modules.link.service.payment;
 
 import com.modules.link.domain.agency.*;
-import com.modules.link.domain.exception.NoExtensionException;
+import com.modules.link.service.exception.NoExtensionException;
+import com.modules.link.service.exception.NotFoundProductsException;
 import com.modules.link.domain.payment.*;
 import com.modules.link.domain.payment.service.PaymentDomainService;
 import com.modules.link.enums.EnumExtensionStatus;
@@ -9,6 +10,7 @@ import com.modules.link.enums.EnumExtraAmountStatus;
 import com.modules.link.enums.EnumResultCode;
 import com.modules.link.enums.EnumTradeTrace;
 import com.modules.link.service.exception.EntityNotFoundException;
+import com.modules.link.service.exception.InvalidStartDateException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -32,6 +36,8 @@ public class PaymentService {
     private final ProductRepository productRepository;
     private final AgencyKeyRepository agencyKeyRepository;
     private final AgencyRepository agencyRepository;
+
+
     private final PaymentDomainService paymentDomainService;
 
     @Transactional(readOnly = true)
@@ -49,17 +55,29 @@ public class PaymentService {
                 .stream()
                 .filter(e -> productList.contains(e.getId().toString()))
                 .collect(Collectors.toList());
-        return paymentDomainService.decideRateSel(receivedRateSel, agency.getAgencyPayment().getRateSel(), products);
+
+        String existingRateSel = agency.getAgencyPayment().getRateSel();
+
+        return paymentDomainService.decideRateSel(receivedRateSel, existingRateSel, products)
+                .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
     }
 
     @Transactional(readOnly = true)
-    public Optional<String> decideStartDate(String startDate, String siteId) {
+    public String decideStartDate(String startDate, String siteId) {
         Agency agency = agencyRepository.find(SiteId.of(siteId));
         AgencyPayment agencyPayment = agency.getAgencyPayment();
         LocalDate start = agencyPayment.getStartDate().orElse(null);
         LocalDate end = agencyPayment.getEndDate().orElse(null);
+        String extensionStatus = agency.getExtensionStatus();
 
-        return Optional.ofNullable(paymentDomainService.decideStartDate(startDate, start, end, agency.getExtensionStatus()));
+        return paymentDomainService.decideStartDate(startDate, start, end, agency.getExtensionStatus())
+                .orElseThrow(() -> {
+                    if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode()) ||
+                            extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+                        return new InvalidStartDateException(EnumResultCode.NoExtension);
+                    }
+                    return new NoExtensionException(EnumResultCode.NoExtension);
+                });
     }
 
     @Transactional(readOnly = true)
