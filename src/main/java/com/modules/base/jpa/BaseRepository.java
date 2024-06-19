@@ -18,6 +18,4 @@ public abstract class BaseRepository <AR extends AggregateRoot<AR, ARID>, ARID, 
     public AR find(ARID id){
         return repository.findById(id).orElse(null);
     }
-
-
 }

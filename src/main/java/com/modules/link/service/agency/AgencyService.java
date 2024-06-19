@@ -21,23 +21,24 @@ import java.util.stream.Collectors;
 public class AgencyService {
     private static final String STATUS_TYPE = "status";
     private static final String CANCEL_TYPE = "cancel";
-    private static final Logger log = LoggerFactory.getLogger(AgencyService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AgencyService.class);
 
 
     private final AgencyRepository agencyRepository;
+    private final AgencyKeyRepository agencyKeyRepository;
     private final AgencyDomainService agencyDomainService;
     private final Validator validator;
 
 
-    public AgencyService(AgencyRepository agencyRepository, AgencyDomainService agencyDomainService, Validator validator) {
+    public AgencyService(AgencyRepository agencyRepository, AgencyKeyRepository agencyKeyRepository, AgencyDomainService agencyDomainService, Validator validator) {
         this.agencyRepository = agencyRepository;
+        this.agencyKeyRepository = agencyKeyRepository;
         this.agencyDomainService = agencyDomainService;
         this.validator = validator;
     }
 
-    @Transactional(readOnly = true)
     public AgencyKey getAgencyKey(AgencyId agencyId) {
-        return agencyRepository.findAgencyKey(agencyId);
+        return agencyKeyRepository.find(agencyId);
     }
 
 
@@ -62,7 +63,7 @@ public class AgencyService {
     @Transactional
     @Validated
     public void save(SiteId siteId, Agency agency) {
-        Site existingSite = agencyRepository.findSite(siteId);
+        Site existingSite = agencyRepository.find(siteId).getSite();
         Agency existingAgency = getAgency(agency.getId());
         agency.addSite(existingAgency, existingSite);
         Set<String> missingFields = validateNotNullFields(agency);

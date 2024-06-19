@@ -8,6 +8,4 @@ import java.util.List;
 
 public interface PaymentRepository extends Repository<Payment, PGTradeNum> {
     List<Payment> findBySiteId(SiteId siteId);
-
-    List<StatDay> findAllByFromDateBetweenAndId(String startDate, String endDate, SiteId siteId);
 }

@@ -9,33 +9,7 @@ import java.util.Optional;
 
 @Repository
 class AgencyRepositoryImpl extends BaseRepository<Agency, SiteId, AgencyJpaRepository> implements AgencyRepository {
-
-    private final SiteJpaRepository siteRepository;
-    private final AgencyKeyJpaRepository agencyKeyRepository;
-
-    public AgencyRepositoryImpl(AgencyJpaRepository agencyRepository, SiteJpaRepository siteRepository, AgencyKeyJpaRepository agencyKeyRepository) {
+    public AgencyRepositoryImpl(AgencyJpaRepository agencyRepository) {
         super(agencyRepository);
-        this.siteRepository = siteRepository;
-        this.agencyKeyRepository = agencyKeyRepository;
-    }
-
-    @Transactional
-    @Override
-    public Agency find(SiteId id) {
-        return repository.findBySiteId(id);
-    }
-
-    @Transactional
-    @Override
-    public Site findSite(SiteId id) {
-        Optional<Site> site = siteRepository.findById(id);
-        return site.orElse(null);
-    }
-
-    @Transactional
-    @Override
-    public AgencyKey findAgencyKey(AgencyId id) {
-        Optional<AgencyKey> agencyKey = agencyKeyRepository.findById(id);
-        return agencyKey.orElse(null);
     }
 }

@@ -66,7 +66,7 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
     private Site site;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
     private AgencyKey agencyKey;
 

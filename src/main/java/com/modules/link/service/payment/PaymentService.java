@@ -28,13 +28,15 @@ public class PaymentService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
+    private final StatDayRepository statDayRepository;
     private final ProductRepository productRepository;
+    private final AgencyKeyRepository agencyKeyRepository;
     private final AgencyRepository agencyRepository;
     private final PaymentDomainService paymentDomainService;
 
     @Transactional(readOnly = true)
     public void isValidSite(String siteId) {
-        if (agencyRepository.find(SiteId.of(siteId)) == null || agencyRepository.findSite(SiteId.of(siteId)) == null) {
+        if (agencyRepository.find(SiteId.of(siteId)) == null || agencyRepository.find(SiteId.of(siteId)).getSite() == null) {
             throw new EntityNotFoundException(EnumResultCode.UnregisteredAgency, siteId);
         }
     }
@@ -42,7 +44,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public String decideRateSel(String receivedRateSel, String receivedSiteId) {
         Agency agency = agencyRepository.find(SiteId.of(receivedSiteId));
-        List<String> productList = agencyRepository.findAgencyKey(agency.getAgencyId()).getProductList();
+        List<String> productList = agencyKeyRepository.find(agency.getAgencyId()).getProductList();
         List<Product> products = productRepository.findByAgencyId(agency.getAgencyId())
                 .stream()
                 .filter(e -> productList.contains(e.getId().toString()))
@@ -84,8 +86,8 @@ public class PaymentService {
         }
         String startDate = excessPayment.getPaymentPeriod().getStartDate();
         String endDate = excessPayment.getPaymentPeriod().getEndDate();
-        List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
-        String billingBase = agencyRepository.findAgencyKey(excessPayment.getAgencyId()).getBillingBase();
+        List<StatDay> statDays = statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
+        String billingBase = agencyKeyRepository.find(excessPayment.getAgencyId()).getBillingBase();
 
         return paymentDomainService.excessCount(excessPayment, billingBase, statDays);
     }
@@ -98,8 +100,8 @@ public class PaymentService {
         }
         String startDate = excessPayment.getPaymentPeriod().getStartDate();
         String endDate = excessPayment.getPaymentPeriod().getEndDate();
-        List<StatDay> statDays = paymentRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
-        String billingBase = agencyRepository.findAgencyKey(excessPayment.getAgencyId()).getBillingBase();
+        List<StatDay> statDays = statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
+        String billingBase = agencyKeyRepository.find(excessPayment.getAgencyId()).getBillingBase();
         Product product = productRepository.find(excessPayment.getRateSel());
         if (product == null) {
             throw new IllegalArgumentException("Product not found with id: " + excessPayment.getRateSel());
@@ -109,7 +111,7 @@ public class PaymentService {
 
     @Transactional
     public List<Map<String, String>> listSel(String agencyId) {
-        List<String> productList = agencyRepository.findAgencyKey(AgencyId.of(agencyId)).getProductList();
+        List<String> productList = agencyKeyRepository.find(AgencyId.of(agencyId)).getProductList();
         return productRepository.findByAgencyId(AgencyId.of(agencyId))
                 .stream()
                 .filter(e -> productList.contains(e.getId().toString()))

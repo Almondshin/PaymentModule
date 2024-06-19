@@ -2,5 +2,5 @@ package com.modules.link.domain.agency;
 
 import com.modules.base.domain.Repository;
 
-public interface AgencyRepository extends Repository<Agency, SiteId> {
+public interface AgencyKeyRepository extends Repository<AgencyKey, AgencyId> {
 }

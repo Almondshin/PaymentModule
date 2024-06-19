@@ -1,6 +1,6 @@
 package com.modules.link.domain.payment;
 
-import com.modules.base.domain.DomainEntity;
+import com.modules.base.domain.AggregateRoot;
 import com.modules.link.domain.agency.SiteId;
 import lombok.Getter;
 import lombok.ToString;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @ToString
 @Table(name = "STAT_DAY")
 @IdClass(StatDayCompositeId.class)
-public class StatDay extends DomainEntity<StatDay, SiteId> {
+public class StatDay extends AggregateRoot<StatDay, SiteId> {
 
     @Id
     @Getter
@@ -25,6 +25,7 @@ public class StatDay extends DomainEntity<StatDay, SiteId> {
     @Getter
     @Column(name = "FROM_DATE")
     private String fromDate;
+
     @Column(name = "PROVIDER_ID")
     private String providerId;
     @Column(name = "SERVICE_TYPE")

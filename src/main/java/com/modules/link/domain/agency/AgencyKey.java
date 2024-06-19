@@ -1,5 +1,6 @@
 package com.modules.link.domain.agency;
 
+import com.modules.base.domain.AggregateRoot;
 import com.modules.base.domain.DomainEntity;
 import lombok.Getter;
 import org.hibernate.annotations.Type;
@@ -16,7 +17,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Table(name = "AGENCY_INFO_KEY")
-public class AgencyKey extends DomainEntity<AgencyKey, AgencyId> {
+public class AgencyKey extends AggregateRoot<AgencyKey, AgencyId> {
 
     @Getter
     @Id
