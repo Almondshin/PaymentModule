@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -75,7 +76,6 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
-
     @Transactional(readOnly = true)
     public int excessCount(String siteId) {
         Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
@@ -130,5 +130,15 @@ public class PaymentService {
         }
         return payment.getPaymentDetails().getExtraAmountStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode());
     }
+
+
+    @Transactional
+    public void verifyValue(String siteId, String rateSel, String startDate, String endDate, String salesPrice, String offer) {
+        Product product = productRepository.find(RateSel.of(rateSel));
+        if (!paymentDomainService.verifyValue(startDate, endDate, salesPrice, offer, product, excessAmount(siteId), excessCount(siteId))) {
+            throw new InvalidParameterException();
+        }
+    }
+
 
 }

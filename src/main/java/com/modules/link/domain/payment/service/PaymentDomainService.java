@@ -8,9 +8,11 @@ import com.modules.link.domain.payment.StatDay;
 import com.modules.link.enums.EnumBillingBase;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumResultCode;
+import com.modules.link.persistence.payment.StatDayJpaRepository;
 import com.modules.link.service.exception.InvalidStartDateException;
 import org.springframework.stereotype.Component;
 
+import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -21,6 +23,11 @@ import java.util.Optional;
 public class PaymentDomainService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final StatDayJpaRepository statDayJpaRepository;
+
+    public PaymentDomainService(StatDayJpaRepository statDayJpaRepository) {
+        this.statDayJpaRepository = statDayJpaRepository;
+    }
 
     public String decideRateSel(String receivedRateSel, String existingRateSel, List<Product> products) {
         if (receivedRateSel != null && !receivedRateSel.isEmpty()) {
@@ -30,6 +37,7 @@ public class PaymentDomainService {
                     .map(product -> product.getId().toString())
                     .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
         }
+
         return (existingRateSel == null) ? "" : existingRateSel;
     }
 
@@ -92,5 +100,58 @@ public class PaymentDomainService {
         }
         return 0;
     }
+
+    public boolean verifyValue(String startDateStr, String endDateStr, String salesPrice, String offer, Product product, int excessAmount, int excessCount) {
+        LocalDate startDate = makeLocalDate(startDateStr);
+        LocalDate endDate = makeLocalDate(endDateStr);
+        return !isValidStartDate(startDate) || !isValidEndDate(startDate, endDate) || !isValidPriceAndAmount(startDate, product, salesPrice, offer, excessAmount, excessCount);
+    }
+
+    private boolean isValidStartDate(LocalDate startDate) {
+        LocalDate now = LocalDate.now();
+        return !startDate.isBefore(now);
+    }
+
+    private boolean isValidEndDate(LocalDate startDate, LocalDate endDate) {
+        LocalDate validDate = startDate.withDayOfMonth(startDate.lengthOfMonth()).minusDays(15);
+        if (startDate.isBefore(validDate)) {
+            return endDate.equals(startDate.withDayOfMonth(startDate.lengthOfMonth()));
+        } else {
+            return endDate.equals(startDate.plusMonths(1).withDayOfMonth(startDate.plusMonths(1).lengthOfMonth()));
+        }
+    }
+
+    private boolean isValidPriceAndAmount(LocalDate startDate, Product product, String salesPrice, String offer, int excessAmount, int excessCount) {
+        int lastDate = startDate.withDayOfMonth(startDate.lengthOfMonth()).getDayOfMonth();
+        int startDateI = startDate.getDayOfMonth();
+        int durations = lastDate - startDateI + 1;
+        int baseOffer = Integer.parseInt(product.getOffer()) / Integer.parseInt(product.getMonth());
+        int basePrice = Integer.parseInt(product.getPrice()) / Integer.parseInt(product.getMonth());
+        int month = Integer.parseInt(product.getMonth());
+        int calcOffer;
+        double calcPrice;
+
+        if (month == 1) {
+            if (durations <= 14) {
+                calcOffer = baseOffer + (baseOffer * durations / lastDate);
+                calcPrice = ((double) (basePrice * durations) / lastDate + basePrice) * 1.1;
+            } else {
+                calcOffer = baseOffer * durations / lastDate;
+                calcPrice = ((double) (basePrice * durations) / lastDate) * 1.1;
+            }
+        } else {
+            calcOffer = baseOffer * (month - 1) + baseOffer * durations / lastDate;
+            calcPrice = ((double) (basePrice * durations) / lastDate + basePrice * (month - 1)) * 1.1;
+        }
+
+        calcPrice += excessAmount;
+        calcOffer += excessCount;
+
+        System.out.println("calcPrice: " + Math.floor(calcPrice));
+        System.out.println("calcOffer: " + calcOffer);
+
+        return String.valueOf(calcOffer).equals(offer) && String.valueOf(Math.floor(calcPrice)).equals(salesPrice);
+    }
+
 
 }

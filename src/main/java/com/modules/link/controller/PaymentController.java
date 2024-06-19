@@ -109,9 +109,16 @@ public class PaymentController {
 
     @PostMapping("/setPayment")
     public ResponseEntity<PaymentResponse<?>> setPaymentInfo(@RequestBody PaymentReceived receivedData) {
-        //TODO
-        // 데이터 검증 필요
-        // checkMchtParams();
+        validateService.isSiteIdStartWithInitial(receivedData.getAgencyId(), receivedData.getSiteId());
+        paymentService.isValidSite(receivedData.getSiteId());
+        System.out.println("receivedData : " + receivedData.toString());
+        paymentService.verifyValue(
+                receivedData.getSiteId(),
+                receivedData.getRateSel(),
+                receivedData.getStartDate(),
+                receivedData.getEndDate(),
+                receivedData.getSalesPrice(),
+                receivedData.getOffer());
         LocalDateTime now = LocalDateTime.now();
 
         String method = receivedData.getMethod();

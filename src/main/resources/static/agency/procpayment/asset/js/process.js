@@ -84,9 +84,7 @@ const process = {
             response = JSON.parse(this.response).body;
             console.log(this.response);
 
-
             [companyName, bizNumber, ceoName] = response.clientInfo;
-
 
             payment.setText("info", "companyName", companyName);
             payment.setValue("info", "companyName", companyName);
@@ -109,8 +107,6 @@ const process = {
                 }
             })
 
-            console.log("response.startDate :" + response.startDate);
-
             if (response.profileUrl != null) {
                 profileSpecificUrl = response.profileUrl;
             }
@@ -126,7 +122,9 @@ const process = {
                 process.data.excessCount = response.excessCount;
             }
 
-            if (response.extensionStatus != null) {
+            console.log(response.extensionStatus)
+
+            if (response.extensionStatus != null && response.extensionStatus !== "") {
                 payment.toggleContainer("startDate", false);
             }
 
@@ -138,8 +136,6 @@ const process = {
                 document.querySelector("#datepicker").value = preInputParameter.startDate;
             }
 
-            //변경부분
-            // setProductTable(productDatalist)
             productDatalist.forEach(e => createProductTableRow(e))
 
 
@@ -252,8 +248,6 @@ const process = {
                 "&companyName=" + companyName +
                 "&bizNumber=" + bizNumber;
 
-            console.log("mchtParams : " + mchtParams)
-
             SETTLE_PG.pay({
                 env      : res.tradeServer,
                 mchtName : mchtName,
@@ -322,8 +316,6 @@ const process = {
 
         process.data.endDate = endDate;
 
-        // document.querySelector("#endDate").value = last.getFullYear() + "-" + ((last.getMonth() + 1) < 10 ? "0" + (last.getMonth() + 1) : (last.getMonth() + 1)) + "-" + last.getDate();
-
         if (duration === 1) {
             if (remainDate <= 14) {
                 duration = (remainDate / currentLastDate.getDate()) + 1;
@@ -338,8 +330,6 @@ const process = {
 
         console.log(`선택일 : ${currentDate.toISOString().slice(0, 10)} 선택월 말일 : ${currentLastDate.toISOString().slice(0, 10)} 종료일 : ${endDate}
                     \n가격 : ${Math.floor(price * duration * 1.1)} 제공건수 : ${Math.floor(offer * duration)}  초과건수 : ${Math.floor(process.data.excessCount)}  초과금액 : ${Math.floor(process.data.excessAmount)}`)
-
-        // return `${returnPrice.toLocaleString()}원 (${process.data.offer.toLocaleString()}건)`
     }
     , selectProduct     : function () {
         if (!document.querySelector("input[name=product_select]:checked")) {
@@ -353,8 +343,6 @@ const process = {
         }
         let index = document.querySelector("input[name=product_select]:checked").dataset.index
         process.selectedProduct = productDatalist[index];
-        //변경부분
-        // setPayment()
         getSelectedProduct()
         setSelectedValue(index)
         popupClose()
@@ -412,41 +400,8 @@ function getTodayDate() {
     return year + "-" + month + "-" + day;
 }
 
-// function calcPrice() {
-//     let obj = getSelectedProduct();
-//     let datepickerValue = document.querySelector("#datepicker").value.split("-");
-//     let year = parseInt(datepickerValue[0]);
-//     let month = parseInt(datepickerValue[1]);
-//     let day = parseInt(datepickerValue[2]) - 1;
-//     let lastDay = new Date(year, month, 0).getDate();
-//     let price = Math.floor(obj.productPrice * ((lastDay - day) / lastDay));
-//     let count = Math.floor(obj.productCount * ((lastDay - day) / lastDay));
-//     console.log("datepickerValue : " + datepickerValue)
-//     return price + "원 (" + count + "건)";
-// }
-
-
 const utils = {
     getParam: function (name) {
-        // let search = location.search.substring(location.search.indexOf("?") + 1);
-        // let value;
-
-        // search = search.split("&");
-
-        // for (let i = 0; i < search.length; i++) {
-        //     let temp = search[i].split("=");
-        //     if (temp[0] === name) {
-        //         value = temp[1];
-        //     }
-        // }
-
-        // for (let item of search) {
-        //     let temp = item.split("=")
-        //     value = temp[0] === name ? temp[1] : ""
-        // }
-
-        // return value !== undefined ? decodeURIComponent(value) : value;
-
         let params = new URLSearchParams(location.search);
         let value = params.get(name)
         return value == null ? "" : decodeURIComponent(value);
