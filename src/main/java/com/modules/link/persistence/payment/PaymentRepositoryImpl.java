@@ -13,7 +13,6 @@ import java.util.List;
 @Repository
 class PaymentRepositoryImpl extends BaseRepository<Payment, PGTradeNum, PaymentJpaRepository> implements PaymentRepository {
 
-
     public PaymentRepositoryImpl(PaymentJpaRepository repository) {
         super(repository);
     }

@@ -62,13 +62,11 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
     @Valid
     private AgencyManager agencyManager;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    //서로 같은 PK를 사용하여 호출을 하는경우 FetchType의 LAZY옵션이 적용되지 않음
+    // 해결방안 > optional = false로 지정
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
     private Site site;
-
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
-    private AgencyKey agencyKey;
 
     public void addSite(Agency agency, Site site) {
         if(agency != null) {

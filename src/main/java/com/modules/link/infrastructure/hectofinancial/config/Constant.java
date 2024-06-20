@@ -1,4 +1,4 @@
-package com.modules.link.infrastructure.hectofinencial.config;
+package com.modules.link.infrastructure.hectofinancial.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

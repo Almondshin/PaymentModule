@@ -1,16 +1,17 @@
-package com.modules.link.service.payment;
+package com.modules.link.application.service.payment;
 
+import com.modules.link.application.port.HectoFinancialServicePort;
+import com.modules.link.application.service.exception.InvalidStartDateException;
+import com.modules.link.application.service.exception.NoExtensionException;
+import com.modules.link.application.service.exception.NotFoundProductsException;
 import com.modules.link.domain.agency.*;
-import com.modules.link.service.exception.NoExtensionException;
-import com.modules.link.service.exception.NotFoundProductsException;
 import com.modules.link.domain.payment.*;
 import com.modules.link.domain.payment.service.PaymentDomainService;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumExtraAmountStatus;
 import com.modules.link.enums.EnumResultCode;
 import com.modules.link.enums.EnumTradeTrace;
-import com.modules.link.service.exception.EntityNotFoundException;
-import com.modules.link.service.exception.InvalidStartDateException;
+import com.modules.link.application.service.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PaymentService {
+public class PaymentService implements HectoFinancialServicePort {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
@@ -161,4 +163,23 @@ public class PaymentService {
     }
 
 
+    @Override
+    public void processPaymentCA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate, String billKey) {
+
+    }
+
+    @Override
+    public void processPaymentVA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate, Date vBankExpireDate) {
+
+    }
+
+    @Override
+    public void updateAgencyStatus(Agency agency) {
+
+    }
+
+    @Override
+    public boolean isEmptyPayment() {
+        return false;
+    }
 }

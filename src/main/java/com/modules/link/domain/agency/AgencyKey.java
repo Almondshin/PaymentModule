@@ -2,6 +2,7 @@ package com.modules.link.domain.agency;
 
 import com.modules.base.domain.AggregateRoot;
 import com.modules.base.domain.DomainEntity;
+import com.modules.link.domain.payment.Product;
 import lombok.Getter;
 import org.hibernate.annotations.Type;
 
@@ -33,12 +34,19 @@ public class AgencyKey extends AggregateRoot<AgencyKey, AgencyId> {
 
     @Column(name = "AGENCY_URL")
     private String agencyUrl;
+
     @Getter
     @Column(name = "AGENCY_PRODUCT_TYPE")
     private String productList;
     @Getter
     @Column(name = "BILLING_BASE")
     private String billingBase;
+
+//      ManyToOne테스트용도
+//    @Getter
+//    @OneToMany(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
+//    private List<Product> products = new ArrayList<>();
 
     public String keyString() {
         return this.id.toString();

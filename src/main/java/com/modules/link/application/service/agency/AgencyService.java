@@ -1,9 +1,9 @@
-package com.modules.link.service.agency;
+package com.modules.link.application.service.agency;
 
 import com.modules.link.domain.agency.*;
 import com.modules.link.domain.agency.service.AgencyDomainService;
-import com.modules.link.service.exception.EntityNotFoundException;
-import com.modules.link.service.exception.NoSuchFieldException;
+import com.modules.link.application.service.exception.EntityNotFoundException;
+import com.modules.link.application.service.exception.NoSuchFieldException;
 import com.modules.link.enums.EnumResultCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,5 +86,7 @@ public class AgencyService {
         return agencyRepository.find(siteId);
     }
 
-
+//    public void testJpa(AgencyId agencyId){
+//        System.out.println(agencyKeyRepository.find(agencyId).getProducts().toString());
+//    }
 }

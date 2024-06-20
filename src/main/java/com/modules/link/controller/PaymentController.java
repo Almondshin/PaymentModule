@@ -4,9 +4,9 @@ import com.modules.link.controller.container.PaymentReceived;
 import com.modules.link.controller.container.PaymentResponse;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumResultCode;
-import com.modules.link.infrastructure.hectofinencial.service.HFService;
-import com.modules.link.service.payment.PaymentService;
-import com.modules.link.service.validate.ValidateService;
+import com.modules.link.infrastructure.hectofinancial.service.HFService;
+import com.modules.link.application.service.payment.PaymentService;
+import com.modules.link.application.service.validate.ValidateService;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -64,9 +64,7 @@ public class PaymentController {
         String agencyId = receivedData.getAgencyId();
         String siteId = receivedData.getSiteId();
         String rateSel = paymentService.decideRateSel(receivedData.getRateSel(), siteId);
-        String startDate = paymentService.decideStartDate(receivedData.getStartDate(), siteId)
-                .map(String::toUpperCase)
-                .orElse("");
+        String startDate = paymentService.decideStartDate(receivedData.getStartDate(), siteId);
         paymentService.isScheduled(siteId);
 
         String extendable = "";
@@ -111,7 +109,6 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse<?>> setPaymentInfo(@RequestBody PaymentReceived receivedData) {
         validateService.isSiteIdStartWithInitial(receivedData.getAgencyId(), receivedData.getSiteId());
         paymentService.isValidSite(receivedData.getSiteId());
-        System.out.println("receivedData : " + receivedData.toString());
         paymentService.verifyValue(
                 receivedData.getSiteId(),
                 receivedData.getRateSel(),

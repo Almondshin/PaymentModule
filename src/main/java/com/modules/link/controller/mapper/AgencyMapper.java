@@ -1,12 +1,12 @@
 package com.modules.link.controller.mapper;
 
-import com.modules.link.controller.dto.AgencyDtos;
+import com.modules.link.controller.dto.AgencyDtos.RegisterInfo;
 import com.modules.link.domain.agency.Agency;
 import com.modules.link.domain.agency.AgencyCompany;
 import com.modules.link.domain.agency.AgencyManager;
 
 public class AgencyMapper {
-    public static Agency toAgency(AgencyDtos.RegisterInfo registerInfo) {
+    public static Agency toAgency(RegisterInfo registerInfo) {
         return Agency.of(
                 registerInfo.getSiteId(),
                 registerInfo.getAgencyId(),

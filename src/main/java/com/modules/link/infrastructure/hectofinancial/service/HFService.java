@@ -1,12 +1,10 @@
-package com.modules.link.infrastructure.hectofinencial.service;
+package com.modules.link.infrastructure.hectofinancial.service;
 
-import com.modules.link.infrastructure.hectofinencial.config.Constant;
-import com.modules.link.infrastructure.hectofinencial.utils.HFUtils;
-import com.modules.link.service.payment.PaymentService;
+import com.modules.link.infrastructure.hectofinancial.config.Constant;
+import com.modules.link.infrastructure.hectofinancial.utils.HFUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

@@ -1,7 +1,6 @@
 package com.modules.link.domain.payment;
 
 import com.modules.base.domain.AggregateRoot;
-import com.modules.link.domain.agency.Agency;
 import com.modules.link.domain.agency.AgencyId;
 import com.modules.link.domain.agency.SiteId;
 import lombok.Builder;
@@ -56,12 +55,8 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
     @Column(name = "MOD_DATE")
     private Date modDate;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
-    private Agency agency;
-
     @Builder
-    public Payment(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate, Agency agency) {
+    private Payment(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
         this.id = id;
         this.agencyId = agencyId;
         this.siteId = siteId;
@@ -72,10 +67,9 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
         this.vBank = vBank;
         this.regDate = regDate;
         this.modDate = modDate;
-        this.agency = agency;
     }
 
-    public static Payment of(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
+    public static Payment ofAutoCA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod) {
         if (id == null || agencyId == null || siteId == null) {
             throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
         }
@@ -84,12 +78,44 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
                 .agencyId(agencyId)
                 .siteId(siteId)
                 .rateSel(rateSel)
-                .billKey(null)
+                .billKey(billKey)
                 .paymentDetails(paymentDetails)
                 .paymentPeriod(paymentPeriod)
-                .vBank(vBank)
                 .regDate(new Date())
                 .modDate(new Date())
+                .build();
+    }
+
+    public static Payment ofCA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel,PaymentDetails paymentDetails, PaymentPeriod paymentPeriod) {
+        if (id == null || agencyId == null || siteId == null) {
+            throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
+        }
+        return Payment.builder()
+                .id(id)
+                .agencyId(agencyId)
+                .siteId(siteId)
+                .rateSel(rateSel)
+                .paymentDetails(paymentDetails)
+                .paymentPeriod(paymentPeriod)
+                .regDate(new Date())
+                .modDate(new Date())
+                .build();
+    }
+
+    public static Payment ofVA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
+        if (id == null || agencyId == null || siteId == null) {
+            throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
+        }
+        return Payment.builder()
+                .id(id)
+                .agencyId(agencyId)
+                .siteId(siteId)
+                .rateSel(rateSel)
+                .paymentDetails(paymentDetails)
+                .paymentPeriod(paymentPeriod)
+                .regDate(new Date())
+                .modDate(new Date())
+                .vBank(vBank)
                 .build();
     }
 }

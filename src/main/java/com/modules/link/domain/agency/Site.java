@@ -2,6 +2,7 @@ package com.modules.link.domain.agency;
 
 import com.modules.base.domain.DomainEntity;
 import lombok.Getter;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
