@@ -110,6 +110,7 @@ public class PaymentController {
         validateService.isSiteIdStartWithInitial(receivedData.getAgencyId(), receivedData.getSiteId());
         paymentService.isValidSite(receivedData.getSiteId());
         paymentService.verifyValue(
+                receivedData.getAgencyId(),
                 receivedData.getSiteId(),
                 receivedData.getRateSel(),
                 receivedData.getStartDate(),

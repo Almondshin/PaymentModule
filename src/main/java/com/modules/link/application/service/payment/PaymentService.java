@@ -1,6 +1,7 @@
 package com.modules.link.application.service.payment;
 
 import com.modules.link.application.port.HectoFinancialServicePort;
+import com.modules.link.application.service.exception.EntityNotFoundException;
 import com.modules.link.application.service.exception.InvalidStartDateException;
 import com.modules.link.application.service.exception.NoExtensionException;
 import com.modules.link.application.service.exception.NotFoundProductsException;
@@ -11,7 +12,6 @@ import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumExtraAmountStatus;
 import com.modules.link.enums.EnumResultCode;
 import com.modules.link.enums.EnumTradeTrace;
-import com.modules.link.application.service.exception.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -35,16 +32,16 @@ public class PaymentService implements HectoFinancialServicePort {
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
     private final StatDayRepository statDayRepository;
-    private final ProductRepository productRepository;
     private final AgencyKeyRepository agencyKeyRepository;
     private final AgencyRepository agencyRepository;
+    private final SiteRepository siteRepository;
 
 
     private final PaymentDomainService paymentDomainService;
 
     @Transactional(readOnly = true)
     public void isValidSite(String siteId) {
-        if (agencyRepository.find(SiteId.of(siteId)) == null || agencyRepository.find(SiteId.of(siteId)).getSite() == null) {
+        if (agencyRepository.find(SiteId.of(siteId)) == null || siteRepository.find(SiteId.of(siteId)) == null) {
             throw new EntityNotFoundException(EnumResultCode.UnregisteredAgency, siteId);
         }
     }
@@ -52,14 +49,12 @@ public class PaymentService implements HectoFinancialServicePort {
     @Transactional(readOnly = true)
     public String decideRateSel(String receivedRateSel, String receivedSiteId) {
         Agency agency = agencyRepository.find(SiteId.of(receivedSiteId));
-        List<String> productList = agencyKeyRepository.find(agency.getAgencyId()).getProductList();
-        List<Product> products = productRepository.findByAgencyId(agency.getAgencyId())
+        List<String> activeProductList = agencyKeyRepository.find(agency.getAgencyId()).getActiveProductList();
+        List<Product> products = agencyKeyRepository.find(agency.getAgencyId()).getProducts()
                 .stream()
-                .filter(e -> productList.contains(e.getId().toString()))
+                .filter(e -> activeProductList.contains(e.getId().toString()))
                 .collect(Collectors.toList());
-
         String existingRateSel = agency.getAgencyPayment().getRateSel();
-
         return paymentDomainService.decideRateSel(receivedRateSel, existingRateSel, products)
                 .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
     }
@@ -122,17 +117,25 @@ public class PaymentService implements HectoFinancialServicePort {
         String endDate = excessPayment.getPaymentPeriod().getEndDate();
         List<StatDay> statDays = statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
         String billingBase = agencyKeyRepository.find(excessPayment.getAgencyId()).getBillingBase();
-        Product product = productRepository.find(excessPayment.getRateSel());
-        if (product == null) {
+        Optional<Product> optionalProduct = agencyKeyRepository.find(excessPayment.getAgencyId()).getProducts()
+                .stream()
+                .filter(e -> e.getId().equals(excessPayment.getRateSel()))
+                .findFirst();
+
+        if (optionalProduct.isEmpty()) {
             throw new IllegalArgumentException("Product not found with id: " + excessPayment.getRateSel());
         }
+
+        Product product = optionalProduct.get();
+
+
         return paymentDomainService.excessAmount(excessPayment, product, billingBase, statDays);
     }
 
     @Transactional
     public List<Map<String, String>> listSel(String agencyId) {
-        List<String> productList = agencyKeyRepository.find(AgencyId.of(agencyId)).getProductList();
-        return productRepository.findByAgencyId(AgencyId.of(agencyId))
+        List<String> productList = agencyKeyRepository.find(AgencyId.of(agencyId)).getActiveProductList();
+        return agencyKeyRepository.find(AgencyId.of(agencyId)).getProducts()
                 .stream()
                 .filter(e -> productList.contains(e.getId().toString()))
                 .map(Product::toMap)
@@ -155,8 +158,16 @@ public class PaymentService implements HectoFinancialServicePort {
 
 
     @Transactional
-    public void verifyValue(String siteId, String rateSel, String startDate, String endDate, String salesPrice, String offer) {
-        Product product = productRepository.find(RateSel.of(rateSel));
+    public void verifyValue(String agencyId, String siteId, String rateSel, String startDate, String endDate, String salesPrice, String offer) {
+        Optional<Product> optionalProduct = agencyKeyRepository.find(AgencyId.of(agencyId)).getProducts()
+                .stream()
+                .filter(e -> e.getId().toString().equals(rateSel))
+                .findFirst();
+
+        if (optionalProduct.isEmpty()) {
+            throw new IllegalArgumentException("Product not found with id: " + rateSel);
+        }
+        Product product = optionalProduct.get();
         if (!paymentDomainService.verifyValue(startDate, endDate, salesPrice, offer, product, excessAmount(siteId), excessCount(siteId))) {
             throw new InvalidParameterException();
         }

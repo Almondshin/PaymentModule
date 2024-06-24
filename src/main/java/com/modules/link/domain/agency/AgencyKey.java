@@ -43,10 +43,10 @@ public class AgencyKey extends AggregateRoot<AgencyKey, AgencyId> {
     private String billingBase;
 
 //      ManyToOne테스트용도
-//    @Getter
-//    @OneToMany(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
-//    private List<Product> products = new ArrayList<>();
+    @Getter
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
+    private List<Product> products = new ArrayList<>();
 
     public String keyString() {
         return this.id.toString();
@@ -60,7 +60,7 @@ public class AgencyKey extends AggregateRoot<AgencyKey, AgencyId> {
         return this.agencyIv;
     }
 
-    public List<String> getProductList() {
+    public List<String> getActiveProductList() {
         return Arrays.stream(productList.split(","))
                 .collect(Collectors.toList());
     }

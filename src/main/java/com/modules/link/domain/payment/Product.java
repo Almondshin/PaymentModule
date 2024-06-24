@@ -1,6 +1,7 @@
 package com.modules.link.domain.payment;
 
 import com.modules.base.domain.AggregateRoot;
+import com.modules.base.domain.DomainEntity;
 import com.modules.link.domain.agency.AgencyId;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,7 +21,7 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 @Table(name = "AGENCY_PRODUCTS")
-public class Product extends AggregateRoot<Product, RateSel> {
+public class Product extends DomainEntity<Product, RateSel> {
 
     @Id
     @Type(type = "com.modules.link.domain.payment.RateSel$RateSelJavaType")
