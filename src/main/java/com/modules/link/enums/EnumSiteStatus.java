@@ -4,8 +4,8 @@ public enum EnumSiteStatus {
     ACTIVE("Y" , "사이트 사용중"),
     SUSPENDED("N" , "사이트 이용정지"),
     UNREGISTERED("E", "제휴사 미등록"),
-    PENDING("H" , "제휴사 승인대기"),
     DUPLICATE("D", "이미 등록된 사이트"),
+    PENDING("H" , "제휴사 승인대기"),
     REJECT("R" , "통신사 심사 반려된 사이트"),
     TRADE_PENDING("P" , "결제 대기");
 

@@ -1,5 +1,6 @@
 package com.modules.link.controller.exception.handler;
 
+import com.modules.link.application.service.exception.InvalidStatusException;
 import com.modules.link.controller.container.PaymentResponse;
 import com.modules.link.application.service.exception.NotFoundProductsException;
 import com.modules.link.application.service.exception.InvalidStartDateException;
@@ -23,6 +24,13 @@ public class PaymentExceptionHandler {
 
     @ExceptionHandler(NotFoundProductsException.class)
     public ResponseEntity<PaymentResponse<Void>> NotFoundProductsException(NotFoundProductsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(PaymentResponse.error(ex.getEnumResultCode().getCode(), ex.getEnumResultCode().getMessage()));
+    }
+
+    @ExceptionHandler(InvalidStatusException.class)
+    public ResponseEntity<PaymentResponse<Void>> InvalidStatusException(InvalidStatusException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(PaymentResponse.error(ex.getEnumResultCode().getCode(), ex.getEnumResultCode().getMessage()));

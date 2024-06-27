@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -16,17 +17,14 @@ public class PaymentPeriod extends ValueObject<PaymentPeriod> {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
     @Column(name = "START_DATE")
-    private Date startDate;
+    private LocalDate startDate;
     @Column(name = "END_DATE")
-    private Date endDate;
-    @Column(name = "BILL_KEY_EXPIREDATE")
-    private String billKeyExpireDate;
+    private LocalDate endDate;
 
     @Builder
-    public PaymentPeriod(Date startDate, Date endDate, String billKeyExpireDate) {
+    public PaymentPeriod(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;
-        this.billKeyExpireDate = billKeyExpireDate;
     }
 
     public String getStartDate() {
@@ -38,6 +36,6 @@ public class PaymentPeriod extends ValueObject<PaymentPeriod> {
 
     @Override
     protected Object[] getEqualityFields() {
-        return new Object[]{startDate, endDate, billKeyExpireDate};
+        return new Object[]{startDate, endDate};
     }
 }

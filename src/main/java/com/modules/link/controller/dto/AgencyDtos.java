@@ -8,6 +8,8 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Objects;
 
@@ -32,7 +34,7 @@ public class AgencyDtos {
         private String companySite;
         private String email;
         private String rateSel;
-        private Date startDate;
+        private String startDate;
         private String settleManagerName;
         private String settleManagerPhoneNumber;
         private String settleManagerTelNumber;

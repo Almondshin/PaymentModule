@@ -1,6 +1,8 @@
 package com.modules.link.domain.agency;
 
 import com.modules.base.domain.AggregateRoot;
+import com.modules.link.domain.payment.PaymentDetails;
+import com.modules.link.domain.payment.RateSel;
 import com.modules.link.enums.EnumExtensionStatus;
 import com.modules.link.enums.EnumSiteStatus;
 import lombok.Builder;
@@ -8,12 +10,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
 
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 
 @Entity
@@ -23,6 +29,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "AGENCY_INFO")
 public class Agency extends AggregateRoot<Agency, SiteId> {
+
+    private static final Logger logger = LoggerFactory.getLogger(Agency.class);
 
     public static final String SITE_INFO = "info";
     public static final String STATUS_TYPE = "status";
@@ -71,15 +79,8 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
 //    @JoinColumn(name = "SITE_ID", insertable = false, updatable = false)
 //    private Site site;
 
-    public Agency addSite() {
-        return new Agency(this.id, this.agencyId, this.getAgencyCompany(), this.getAgencyManager());
-    }
 
-    private Agency(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
-        this(siteId, agencyId, EnumSiteStatus.PENDING.getCode(), EnumExtensionStatus.DEFAULT.getCode(), LocalDateTime.now(), agencyCompany, agencyManager);
-    }
-
-    public static Agency of(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
+    public static Agency of(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyPayment agencyPayment, AgencyManager agencyManager) {
         if (siteId == null) {
             throw new IllegalArgumentException("제휴사의 siteId는 Null이 아니어야 합니다.");
         }
@@ -90,20 +91,60 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
                 .id(siteId)
                 .agencyId(agencyId)
                 .agencyCompany(agencyCompany)
+                .agencyPayment(agencyPayment)
                 .agencyManager(agencyManager)
                 .build();
     }
 
-    @Builder
-    private Agency(SiteId id, AgencyId agencyId, AgencyCompany agencyCompany, AgencyPayment agencyPayment, AgencyManager agencyManager) {
-        this.id = id;
-        this.agencyId = agencyId;
-        this.agencyCompany = agencyCompany;
-        this.agencyPayment = agencyPayment;
-        this.agencyManager = agencyManager;
+    public Agency addSite() {
+        return new Agency(this.id, this.agencyId, this.getAgencyCompany(), this.getAgencyManager());
     }
 
-    @Builder
+    private Agency(SiteId siteId, AgencyId agencyId, AgencyCompany agencyCompany, AgencyManager agencyManager) {
+        this(siteId, agencyId, EnumSiteStatus.PENDING.getCode(), EnumExtensionStatus.DEFAULT.getCode(), LocalDateTime.now(), agencyCompany, agencyManager);
+    }
+
+
+    public static Agency updateAgencyByVAPending(Agency agency, String siteStatus, String extensionStatus, AgencyPayment agencyPayment, RateSel rateSel, LocalDate startDate, LocalDate endDate) {
+        if (EnumExtensionStatus.NOT_EXTENDABLE.getCode().equals(agency.getExtensionStatus())) {
+            logger.info("Agency extension status is {}", EnumExtensionStatus.NOT_EXTENDABLE.getCode());
+            throw new IllegalArgumentException("Agency extensionStatus is invalid.");
+        }
+
+        AgencyPayment updatedAgencyPayment = agencyPayment;
+        if (EnumExtensionStatus.DEFAULT.getCode().equals(extensionStatus)) {
+            updatedAgencyPayment = AgencyPayment.updateAgencyPayment(agencyPayment, rateSel, startDate, endDate);
+        }
+
+        return Agency.builder()
+                .id(agency.getId())
+                .agencyId(agency.getAgencyId())
+                .agencyStatus(siteStatus)
+                .extensionStatus(extensionStatus)
+                .registeredTime(agency.getRegisteredTime())
+                .agencyCompany(agency.getAgencyCompany())
+                .agencyPayment(updatedAgencyPayment)
+                .agencyManager(agency.getAgencyManager())
+                .build();
+    }
+
+    public static Agency updateExcessCount(Agency agency, AgencyPayment agencyPayment, int excessCount){
+        return Agency.builder()
+                .id(agency.getId())
+                .agencyId(agency.getAgencyId())
+                .agencyStatus(agency.getAgencyStatus())
+                .extensionStatus(agency.getExtensionStatus())
+                .registeredTime(agency.getRegisteredTime())
+                .agencyCompany(agency.getAgencyCompany())
+                .agencyPayment(AgencyPayment.updateAgencyExcessCount(agencyPayment, String.valueOf(excessCount)))
+                .agencyManager(agency.getAgencyManager())
+                .build();
+    }
+
+
+
+
+
     public Agency(SiteId id, AgencyId agencyId, String siteStatus, String extensionStatus, LocalDateTime registeredTime, AgencyCompany agencyCompany, AgencyManager agencyManager) {
         this.id = id;
         this.agencyId = agencyId;
@@ -111,6 +152,18 @@ public class Agency extends AggregateRoot<Agency, SiteId> {
         this.registeredTime = registeredTime;
         this.extensionStatus = extensionStatus;
         this.agencyCompany = agencyCompany;
+        this.agencyManager = agencyManager;
+    }
+
+    @Builder
+    public Agency(SiteId id, AgencyId agencyId, String agencyStatus, String extensionStatus, LocalDateTime registeredTime, AgencyCompany agencyCompany, AgencyPayment agencyPayment, AgencyManager agencyManager) {
+        this.id = id;
+        this.agencyId = agencyId;
+        this.agencyStatus = agencyStatus;
+        this.registeredTime = registeredTime;
+        this.extensionStatus = extensionStatus;
+        this.agencyCompany = agencyCompany;
+        this.agencyPayment = agencyPayment;
         this.agencyManager = agencyManager;
     }
 

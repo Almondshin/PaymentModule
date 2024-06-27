@@ -1,0 +1,20 @@
+POST https://localhost:9002/agency/payment/api/result/noti
+Content-Type: application/x-www-form-urlencoded
+
+bizType=A0&
+mchtTrdNo=DS20240626144614697017889&
+method=VA&
+mchtName=드림시큐리티&
+trdAmt=12833&
+mchtParam=agencyId=dreamtest%26siteId=DTtest0002%26startDate=2024-06-26%26endDate=2024-07-31%26rateSel=dreamtest_lite_1m_200%26offer=233%26productName=라이트%201개월%20200건%26autopayYN=undefined%26companyName=companyName%26bizNumber=bizNumber&
+vAcntNo=35016182512039&
+trdNo=STFP_PGVAnx_mid_il00240626144620M1639899&
+trdDtm=20240626144620&
+expireDt=20240706235959&
+pktHash=83d2d829fa598e759ca4cb7aa7fbbe97d4dbd78fb7c64f73397b9ebf4fcd7b67&
+pmtprdNm=라이트%201개월%20200건( 2024-06-26%20-%202024-07-31 )&
+outStatCd=0051&
+bankCd=023&
+mchtId=nx_mid_il&
+AcntPrintNm=드림시큐리티&
+bankNm=제일은행

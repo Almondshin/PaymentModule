@@ -68,7 +68,10 @@ public class PaymentController {
         paymentService.isScheduled(siteId);
 
         String extendable = "";
+        int excessCount = 0, excessAmount = 0;
         if (paymentService.isExtendable(siteId)) {
+            excessCount = paymentService.excessCount(siteId);
+            excessAmount = paymentService.excessAmount(siteId);
             extendable = EnumExtensionStatus.EXTENDABLE.getCode();
         }
         return ResponseEntity.ok(PaymentResponse.success(
@@ -82,8 +85,8 @@ public class PaymentController {
                         .profileUrl(profileSpecificUrl)
                         .profilePaymentUrl(profileSpecificPaymentUrl)
                         .extensionStatus(extendable)
-                        .excessCount(paymentService.excessCount(siteId))
-                        .excessAmount(paymentService.excessAmount(siteId))
+                        .excessCount(excessCount)
+                        .excessAmount(excessAmount)
                         .build()));
     }
 
@@ -109,6 +112,8 @@ public class PaymentController {
     public ResponseEntity<PaymentResponse<?>> setPaymentInfo(@RequestBody PaymentReceived receivedData) {
         validateService.isSiteIdStartWithInitial(receivedData.getAgencyId(), receivedData.getSiteId());
         paymentService.isValidSite(receivedData.getSiteId());
+        paymentService.decideRateSel(receivedData.getRateSel(), receivedData.getSiteId());
+        paymentService.decideStartDate(receivedData.getStartDate(), receivedData.getSiteId());
         paymentService.verifyValue(
                 receivedData.getAgencyId(),
                 receivedData.getSiteId(),

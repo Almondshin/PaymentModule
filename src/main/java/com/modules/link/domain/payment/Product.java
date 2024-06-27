@@ -1,18 +1,15 @@
 package com.modules.link.domain.payment;
 
-import com.modules.base.domain.AggregateRoot;
 import com.modules.base.domain.DomainEntity;
 import com.modules.link.domain.agency.AgencyId;
+import com.modules.link.domain.agency.AgencyKey;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +39,12 @@ public class Product extends DomainEntity<Product, RateSel> {
     private String feePerCase;
     @Column(name = "EXCESS_PER_CASE")
     private String excessPerCase;
+
+//    //      ManyToOne테스트용도
+//    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+//    @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
+//    private AgencyKey agencyKey;
+
 
     @Builder
     public Product(RateSel id, AgencyId agencyId, String name, String price, String offer, String month, String feePerCase, String excessPerCase) {

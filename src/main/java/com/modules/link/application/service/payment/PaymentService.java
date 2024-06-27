@@ -2,16 +2,12 @@ package com.modules.link.application.service.payment;
 
 import com.modules.link.application.port.HectoFinancialServicePort;
 import com.modules.link.application.service.exception.EntityNotFoundException;
-import com.modules.link.application.service.exception.InvalidStartDateException;
+import com.modules.link.application.service.exception.InvalidStatusException;
 import com.modules.link.application.service.exception.NoExtensionException;
-import com.modules.link.application.service.exception.NotFoundProductsException;
 import com.modules.link.domain.agency.*;
 import com.modules.link.domain.payment.*;
 import com.modules.link.domain.payment.service.PaymentDomainService;
-import com.modules.link.enums.EnumExtensionStatus;
-import com.modules.link.enums.EnumExtraAmountStatus;
-import com.modules.link.enums.EnumResultCode;
-import com.modules.link.enums.EnumTradeTrace;
+import com.modules.link.enums.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.InvalidParameterException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -29,6 +28,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PaymentService implements HectoFinancialServicePort {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String SCHEDULED = "autopay";
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
     private final StatDayRepository statDayRepository;
@@ -44,43 +44,49 @@ public class PaymentService implements HectoFinancialServicePort {
         if (agencyRepository.find(SiteId.of(siteId)) == null || siteRepository.find(SiteId.of(siteId)) == null) {
             throw new EntityNotFoundException(EnumResultCode.UnregisteredAgency, siteId);
         }
+        String siteStatus = agencyRepository.find(SiteId.of(siteId)).getAgencyStatus();
+        //H
+        if (siteStatus.equals(EnumSiteStatus.PENDING.getCode())) {
+            throw new InvalidStatusException(EnumResultCode.PendingApprovalStatus, siteId);
+        }
+        //R
+        if (siteStatus.equals(EnumSiteStatus.REJECT.getCode())) {
+            throw new InvalidStatusException(EnumResultCode.RejectAgency, siteId);
+        }
+        //N
+        if (siteStatus.equals(EnumSiteStatus.SUSPENDED.getCode())) {
+            throw new InvalidStatusException(EnumResultCode.SuspendedSiteId, siteId);
+        }
+
     }
 
     @Transactional(readOnly = true)
     public String decideRateSel(String receivedRateSel, String receivedSiteId) {
         Agency agency = agencyRepository.find(SiteId.of(receivedSiteId));
-        List<String> activeProductList = agencyKeyRepository.find(agency.getAgencyId()).getActiveProductList();
-        List<Product> products = agencyKeyRepository.find(agency.getAgencyId()).getProducts()
-                .stream()
-                .filter(e -> activeProductList.contains(e.getId().toString()))
-                .collect(Collectors.toList());
-        String existingRateSel = agency.getAgencyPayment().getRateSel();
-        return paymentDomainService.decideRateSel(receivedRateSel, existingRateSel, products)
-                .orElseThrow(() -> new NotFoundProductsException(EnumResultCode.NotFoundProducts));
+        AgencyKey agencyKey = agencyKeyRepository.find(agency.getAgencyId());
+        List<String> activeProductList = agencyKey.getActiveProductList();
+        List<Product> products = agencyKey.getProducts();
+        AgencyPayment agencyPayment = Optional.ofNullable(agency.getAgencyPayment()).orElseGet(AgencyPayment::new);
+        RateSel rateSel = agencyPayment.getRateSel();
+        return paymentDomainService.decideRateSel(receivedRateSel, rateSel, activeProductList, products);
     }
 
     @Transactional(readOnly = true)
     public String decideStartDate(String startDate, String siteId) {
         Agency agency = agencyRepository.find(SiteId.of(siteId));
-        AgencyPayment agencyPayment = agency.getAgencyPayment();
-        LocalDate start = agencyPayment.getStartDate().orElse(null);
-        LocalDate end = agencyPayment.getEndDate().orElse(null);
+        AgencyPayment agencyPayment = Optional.ofNullable(agency.getAgencyPayment()).orElseGet(AgencyPayment::new);
+        LocalDate start = agencyPayment.getStartDate();
+        LocalDate end = agencyPayment.getEndDate();
         String extensionStatus = agency.getExtensionStatus();
+        return paymentDomainService.decideStartDate(startDate, start, end, extensionStatus);
 
-        return paymentDomainService.decideStartDate(startDate, start, end, agency.getExtensionStatus())
-                .orElseThrow(() -> {
-                    if (extensionStatus.equals(EnumExtensionStatus.DEFAULT.getCode()) ||
-                            extensionStatus.equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-                        return new InvalidStartDateException(EnumResultCode.NoExtension);
-                    }
-                    return new NoExtensionException(EnumResultCode.NoExtension);
-                });
     }
 
     @Transactional(readOnly = true)
     public void isScheduled(String siteId) {
         Agency agency = agencyRepository.find(SiteId.of(siteId));
-        if (agency.getAgencyPayment().isScheduledRateSel()) {
+        AgencyPayment agencyPayment = Optional.ofNullable(agency.getAgencyPayment()).orElseGet(AgencyPayment::new);
+        if (agencyPayment.isScheduledRateSel()) {
             throw new NoExtensionException(EnumResultCode.Subscription);
         }
     }
@@ -95,16 +101,28 @@ public class PaymentService implements HectoFinancialServicePort {
 
     @Transactional(readOnly = true)
     public int excessCount(String siteId) {
-        Payment excessPayment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
-        if (excessPayment == null) {
+        Payment payment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
+        if (payment == null) {
             return 0;
         }
-        String startDate = excessPayment.getPaymentPeriod().getStartDate();
-        String endDate = excessPayment.getPaymentPeriod().getEndDate();
+        String startDate = payment.getPaymentPeriod().getStartDate();
+        String endDate = payment.getPaymentPeriod().getEndDate();
         List<StatDay> statDays = statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
-        String billingBase = agencyKeyRepository.find(excessPayment.getAgencyId()).getBillingBase();
+        String billingBase = agencyKeyRepository.find(payment.getAgencyId()).getBillingBase();
 
-        return paymentDomainService.excessCount(excessPayment, billingBase, statDays);
+        int excessCount = paymentDomainService.excessCount(payment, billingBase, statDays);
+
+        Agency agency = agencyRepository.find(SiteId.of(siteId));
+        AgencyPayment agencyPayment = agency.getAgencyPayment();
+        agencyRepository.add(Agency.updateExcessCount(agency, agencyPayment, excessCount));
+
+        int useCount = paymentDomainService.useCount(statDays, billingBase);
+
+        PaymentDetails paymentDetails = payment.getPaymentDetails();
+        Payment updatedPayment = Payment.updatePaymentUseCount(payment, paymentDetails, useCount);
+        paymentRepository.add(updatedPayment);
+
+        return excessCount;
     }
 
     @Transactional(readOnly = true)
@@ -117,19 +135,8 @@ public class PaymentService implements HectoFinancialServicePort {
         String endDate = excessPayment.getPaymentPeriod().getEndDate();
         List<StatDay> statDays = statDayRepository.findAllByFromDateBetweenAndId(startDate, endDate, SiteId.of(siteId));
         String billingBase = agencyKeyRepository.find(excessPayment.getAgencyId()).getBillingBase();
-        Optional<Product> optionalProduct = agencyKeyRepository.find(excessPayment.getAgencyId()).getProducts()
-                .stream()
-                .filter(e -> e.getId().equals(excessPayment.getRateSel()))
-                .findFirst();
-
-        if (optionalProduct.isEmpty()) {
-            throw new IllegalArgumentException("Product not found with id: " + excessPayment.getRateSel());
-        }
-
-        Product product = optionalProduct.get();
-
-
-        return paymentDomainService.excessAmount(excessPayment, product, billingBase, statDays);
+        List<Product> products = agencyKeyRepository.find(excessPayment.getAgencyId()).getProducts();
+        return paymentDomainService.excessAmount(excessPayment, products, billingBase, statDays);
     }
 
     @Transactional
@@ -149,48 +156,127 @@ public class PaymentService implements HectoFinancialServicePort {
 
     @Transactional
     public boolean isExtendable(String siteId) {
-        Payment payment = paymentDomainService.excessPayment(payments(siteId)).orElse(null);
-        if (payment == null) {
-            return false;
-        }
-        return payment.getPaymentDetails().getExtraAmountStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode());
+        return agencyRepository.find(SiteId.of(siteId)).getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode());
     }
 
 
     @Transactional
     public void verifyValue(String agencyId, String siteId, String rateSel, String startDate, String endDate, String salesPrice, String offer) {
-        Optional<Product> optionalProduct = agencyKeyRepository.find(AgencyId.of(agencyId)).getProducts()
-                .stream()
-                .filter(e -> e.getId().toString().equals(rateSel))
-                .findFirst();
-
-        if (optionalProduct.isEmpty()) {
-            throw new IllegalArgumentException("Product not found with id: " + rateSel);
-        }
-        Product product = optionalProduct.get();
-        if (!paymentDomainService.verifyValue(startDate, endDate, salesPrice, offer, product, excessAmount(siteId), excessCount(siteId))) {
+        List<Product> products = agencyKeyRepository.find(AgencyId.of(agencyId)).getProducts();
+        if (!paymentDomainService.verifyValue(startDate, endDate, salesPrice, offer, products, rateSel, excessAmount(siteId), excessCount(siteId))) {
             throw new InvalidParameterException();
         }
     }
 
 
     @Override
-    public void processPaymentCA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate, String billKey) {
-
+    public void processPaymentCA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate, String billKey, String billKeyExpireDt) {
+        PaymentRequest paymentRequest = ResponseParamMapper.mapToPaymentRequest(responseParam);
+        paymentRepository.add(
+                Payment.ofCA(
+                        PGTradeNum.of(paymentRequest.getPgTradeNum()),
+                        AgencyId.of(agencyId),
+                        SiteId.of(siteId),
+                        RateSel.of(rateSel),
+                        PaymentDetails.builder()
+                                .tradeNum(paymentRequest.getTradeNum())
+                                .paymentType(paymentRequest.getMethod())
+                                .amount(paymentRequest.getAmount())
+                                .offer(offer)
+                                .trTrace(EnumTradeTrace.USED.getCode())
+                                .paymentStatus(EnumPaymentStatus.ACTIVE.getCode())
+                                .trDate(trDate)
+                                .extraAmountStatus(EnumExtraAmountStatus.PASS.getCode())
+                                .build()
+                        , PaymentPeriod.builder()
+                                .startDate(startDate)
+                                .endDate(endDate)
+                                .build()
+                        , billKey
+                        , billKeyExpireDt
+                )
+        );
     }
 
     @Override
-    public void processPaymentVA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate, Date vBankExpireDate) {
+    @Transactional
+    public void processPaymentVA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate) {
+        PaymentRequest paymentRequest = ResponseParamMapper.mapToPaymentRequest(responseParam);
+        Payment payment = paymentRepository.find(PGTradeNum.of(paymentRequest.getPgTradeNum()));
+        PaymentDetails paymentDetails = payment.getPaymentDetails();
+        PaymentDetails newPaymentDetails = PaymentDetails.builder()
+                .tradeNum(paymentRequest.getTradeNum())
+                .paymentType(paymentRequest.getMethod())
+                .amount(paymentRequest.getAmount())
+                .trTrace(EnumTradeTrace.USED.getCode())
+                .paymentStatus(EnumPaymentStatus.ACTIVE.getCode())
+                .offer(offer)
+                .extraAmountStatus(EnumExtraAmountStatus.PASS.getCode())
+                .trDate(trDate)
+                .build();
+        if (!paymentDetails.equals(newPaymentDetails)) {
+            logger.info("Payment details are different {} to {}", paymentDetails, newPaymentDetails);
+        }
 
+        paymentRepository.add(Payment.ofVA(payment, newPaymentDetails));
+
+        Agency agency = agencyRepository.find(SiteId.of(siteId));
+        AgencyPayment agencyPayment = agency.getAgencyPayment();
+
+        if (EnumExtensionStatus.DEFAULT.getCode().equals(agency.getExtensionStatus())) {
+            agencyPayment = AgencyPayment.updateAgencyPayment(agencyPayment, RateSel.of(rateSel), startDate, endDate);
+        }
+
+        agencyRepository.add(
+                Agency.updateAgencyByVAPending(
+                        agency,
+                        EnumSiteStatus.ACTIVE.getCode(),
+                        EnumExtensionStatus.NOT_EXTENDABLE.getCode(),
+                        agencyPayment,
+                        RateSel.of(rateSel),
+                        startDate,
+                        endDate)
+        );
+    }
+
+
+    @Override
+    @Transactional
+    public void processPaymentVAPending(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate, LocalDate vBankExpireDate) {
+        PaymentRequest paymentRequest = ResponseParamMapper.mapToPaymentRequest(responseParam);
+        paymentRepository.add(
+                Payment.ofVAPending(
+                        PGTradeNum.of(paymentRequest.getPgTradeNum()),
+                        AgencyId.of(agencyId),
+                        SiteId.of(siteId),
+                        RateSel.of(rateSel),
+                        PaymentDetails.builder()
+                                .tradeNum(paymentRequest.getTradeNum())
+                                .paymentType(paymentRequest.getMethod())
+                                .amount(paymentRequest.getAmount())
+                                .offer(offer)
+                                .trTrace(EnumTradeTrace.NOT_USED.getCode())
+                                .paymentStatus(EnumPaymentStatus.NOT_DEPOSITED.getCode())
+                                .trDate(trDate)
+                                .extraAmountStatus(EnumExtraAmountStatus.PASS.getCode())
+                                .build()
+                        , PaymentPeriod.builder()
+                                .startDate(startDate)
+                                .endDate(endDate)
+                                .build()
+                        , VBank.builder()
+                                .vBankName(paymentRequest.getVBankName())
+                                .vBankAccount(paymentRequest.getVBankAccount())
+                                .vBankExpireDate(vBankExpireDate)
+                                .rcptName(paymentRequest.getRcptName())
+                                .build()
+                )
+        );
     }
 
     @Override
-    public void updateAgencyStatus(Agency agency) {
-
-    }
-
-    @Override
-    public boolean isEmptyPayment() {
-        return false;
+    @Transactional(readOnly = true)
+    public boolean isCurrentPayment(String pgTradeNum) {
+        return paymentRepository.find(PGTradeNum.of(pgTradeNum)) == null;
     }
 }

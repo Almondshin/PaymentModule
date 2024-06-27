@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Getter
 @Embeddable
@@ -36,7 +36,7 @@ public class PaymentDetails extends ValueObject<PaymentDetails> {
     private String paymentStatus;
 
     @Column(name = "TR_DATE")
-    private Date trDate;
+    private LocalDate trDate;
 
     @Column(name = "EXTRA_AMOUNT_STATUS")
     private String extraAmountStatus;
@@ -45,7 +45,7 @@ public class PaymentDetails extends ValueObject<PaymentDetails> {
     private String memo;
 
     @Builder
-    public PaymentDetails(String tradeNum, String paymentType, String amount, String offer, String useCount, String trTrace, String paymentStatus, Date trDate, String extraAmountStatus, String memo) {
+    public PaymentDetails(String tradeNum, String paymentType, String amount, String offer, String useCount, String trTrace, String paymentStatus, LocalDate trDate, String extraAmountStatus, String memo) {
         this.tradeNum = tradeNum;
         this.paymentType = paymentType;
         this.amount = amount;
@@ -58,8 +58,24 @@ public class PaymentDetails extends ValueObject<PaymentDetails> {
         this.memo = memo;
     }
 
+    public static PaymentDetails updateUseCount(PaymentDetails paymentDetails, String useCount) {
+        return PaymentDetails.builder()
+                .tradeNum(paymentDetails.getTradeNum())
+                .paymentType(paymentDetails.getPaymentType())
+                .amount(paymentDetails.getAmount())
+                .offer(paymentDetails.getOffer())
+                .useCount(useCount)
+                .trTrace(paymentDetails.getTrTrace())
+                .paymentStatus(paymentDetails.getPaymentStatus())
+                .trDate(paymentDetails.getTrDate())
+                .extraAmountStatus(paymentDetails.getExtraAmountStatus())
+                .memo(paymentDetails.getMemo())
+                .build();
+    }
+
+
     @Override
-    protected Object[] getEqualityFields() {
-        return new Object[]{tradeNum, paymentType, amount, offer, useCount, trTrace, paymentStatus, trDate, extraAmountStatus, memo};
+    public Object[] getEqualityFields() {
+        return new Object[]{tradeNum, paymentType, amount, offer, useCount, trDate, memo};
     }
 }

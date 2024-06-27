@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Embeddable
@@ -17,7 +18,7 @@ public class VBank extends ValueObject<VBank> {
     @Column(name = "VBANK_ACCOUNT")
     private String vBankAccount;
     @Column(name = "VBANK_EXPIREDATE")
-    private Date vBankExpireDate;
+    private LocalDate vBankExpireDate;
     @Column(name = "RCPT_NAME")
     private String rcptName;
 
@@ -28,7 +29,7 @@ public class VBank extends ValueObject<VBank> {
     }
 
     @Builder
-    public VBank(String vBankName, String vBankAccount, Date vBankExpireDate, String rcptName) {
+    public VBank(String vBankName, String vBankAccount, LocalDate vBankExpireDate, String rcptName) {
         this.vBankName = vBankName;
         this.vBankAccount = vBankAccount;
         this.vBankExpireDate = vBankExpireDate;

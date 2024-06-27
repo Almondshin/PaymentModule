@@ -122,8 +122,6 @@ const process = {
                 process.data.excessCount = response.excessCount;
             }
 
-            console.log(response.extensionStatus)
-
             if (response.extensionStatus != null && response.extensionStatus !== "") {
                 payment.toggleContainer("startDate", false);
             }

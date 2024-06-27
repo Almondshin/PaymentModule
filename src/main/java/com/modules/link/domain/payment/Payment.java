@@ -11,7 +11,7 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -40,6 +40,9 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
     @Column(name = "BILL_KEY")
     private String billKey;
 
+    @Column(name = "BILL_KEY_EXPIREDATE")
+    private String billKeyExpireDate;
+
     @Embedded
     private PaymentDetails paymentDetails;
 
@@ -50,18 +53,19 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
     private VBank vBank;
 
     @Column(name = "REG_DATE")
-    private Date regDate;
+    private LocalDateTime regDate;
 
     @Column(name = "MOD_DATE")
-    private Date modDate;
+    private LocalDateTime modDate;
 
     @Builder
-    private Payment(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, Date regDate, Date modDate) {
+    private Payment(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, String billKeyExpireDate, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank, LocalDateTime regDate, LocalDateTime modDate) {
         this.id = id;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.rateSel = rateSel;
         this.billKey = billKey;
+        this.billKeyExpireDate = billKeyExpireDate;
         this.paymentDetails = paymentDetails;
         this.paymentPeriod = paymentPeriod;
         this.vBank = vBank;
@@ -69,24 +73,30 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
         this.modDate = modDate;
     }
 
-    public static Payment ofAutoCA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, String billKey, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod) {
+    public static Payment ofCA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel,PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, String billKey, String billKeyExpireDate) {
         if (id == null || agencyId == null || siteId == null) {
             throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
+        }
+        if (billKey == null) {
+            billKey = "";
+        }
+        if (billKeyExpireDate == null) {
+            billKeyExpireDate = "";
         }
         return Payment.builder()
                 .id(id)
                 .agencyId(agencyId)
                 .siteId(siteId)
                 .rateSel(rateSel)
+                .paymentDetails(paymentDetails)
+                .paymentPeriod(paymentPeriod)
                 .billKey(billKey)
-                .paymentDetails(paymentDetails)
-                .paymentPeriod(paymentPeriod)
-                .regDate(new Date())
-                .modDate(new Date())
+                .billKeyExpireDate(billKeyExpireDate)
+                .regDate(LocalDateTime.now())
                 .build();
     }
 
-    public static Payment ofCA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel,PaymentDetails paymentDetails, PaymentPeriod paymentPeriod) {
+    public static Payment ofVAPending(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
         if (id == null || agencyId == null || siteId == null) {
             throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
         }
@@ -97,25 +107,37 @@ public class Payment extends AggregateRoot<Payment, PGTradeNum> implements Seria
                 .rateSel(rateSel)
                 .paymentDetails(paymentDetails)
                 .paymentPeriod(paymentPeriod)
-                .regDate(new Date())
-                .modDate(new Date())
-                .build();
-    }
-
-    public static Payment ofVA(PGTradeNum id, AgencyId agencyId, SiteId siteId, RateSel rateSel, PaymentDetails paymentDetails, PaymentPeriod paymentPeriod, VBank vBank) {
-        if (id == null || agencyId == null || siteId == null) {
-            throw new IllegalArgumentException("PGTradeNum, AgencyId, and SiteId cannot be null");
-        }
-        return Payment.builder()
-                .id(id)
-                .agencyId(agencyId)
-                .siteId(siteId)
-                .rateSel(rateSel)
-                .paymentDetails(paymentDetails)
-                .paymentPeriod(paymentPeriod)
-                .regDate(new Date())
-                .modDate(new Date())
                 .vBank(vBank)
+                .regDate(LocalDateTime.now())
+                .build();
+    }
+    public static Payment ofVA(Payment payment, PaymentDetails paymentDetails) {
+        return Payment.builder()
+                .id(payment.getId())
+                .agencyId(payment.getAgencyId())
+                .siteId(payment.getSiteId())
+                .rateSel(payment.getRateSel())
+                .billKey(payment.getBillKey())
+                .paymentDetails(paymentDetails)
+                .paymentPeriod(payment.getPaymentPeriod())
+                .vBank(payment.getVBank())
+                .regDate(payment.getRegDate())
+                .modDate(LocalDateTime.now())
+                .build();
+    }
+
+    public static Payment updatePaymentUseCount(Payment payment, PaymentDetails paymentDetails, int useCount) {
+        return Payment.builder()
+                .id(payment.getId())
+                .agencyId(payment.getAgencyId())
+                .siteId(payment.getSiteId())
+                .rateSel(payment.getRateSel())
+                .billKey(payment.getBillKey())
+                .paymentDetails(PaymentDetails.updateUseCount(paymentDetails, String.valueOf(useCount)))
+                .paymentPeriod(payment.getPaymentPeriod())
+                .vBank(payment.getVBank())
+                .regDate(payment.getRegDate())
+                .modDate(LocalDateTime.now())
                 .build();
     }
 }

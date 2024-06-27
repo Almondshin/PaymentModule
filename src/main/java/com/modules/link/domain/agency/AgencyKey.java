@@ -4,6 +4,7 @@ import com.modules.base.domain.AggregateRoot;
 import com.modules.base.domain.DomainEntity;
 import com.modules.link.domain.payment.Product;
 import lombok.Getter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -11,6 +12,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static javax.persistence.GenerationType.IDENTITY;
@@ -42,11 +44,16 @@ public class AgencyKey extends AggregateRoot<AgencyKey, AgencyId> {
     @Column(name = "BILLING_BASE")
     private String billingBase;
 
-//      ManyToOne테스트용도
     @Getter
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "AGENCY_ID", insertable = false, updatable = false)
     private List<Product> products = new ArrayList<>();
+
+//    //      ManyToOne테스트용도
+//    @Getter
+//    @BatchSize(size = 1000)
+//    @OneToMany(mappedBy = "agencyKey", fetch = FetchType.EAGER)
+//    private Set<Product> products;
 
     public String keyString() {
         return this.id.toString();

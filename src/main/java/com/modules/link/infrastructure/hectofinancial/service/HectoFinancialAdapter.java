@@ -39,27 +39,22 @@ public class HectoFinancialAdapter {
 
     public String notiCAData(NotiCADto notiCADto) {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
-        resParams(RES_PARAMS, notiCADto);
+        resParamsCA(RES_PARAMS, notiCADto);
 
-        String hashPlain = createHashPlainText(notiCADto.getMchtTrdNo(), notiCADto.getTrdAmt(), notiCADto.getOutStatCd(), notiCADto.getMchtId(), notiCADto.getTrdDtm());
-        String hashCipher = generateHashCipher(hashPlain, RES_PARAMS.get("mchtTrdNo"));
+        String hashPlain = createHashPlainText(
+                notiCADto.getOutStatCd(),
+                notiCADto.getTrdDtm(),
+                notiCADto.getMchtId(),
+                notiCADto.getMchtTrdNo(),
+                notiCADto.getTrdAmt()) + constant.LICENSE_KEY;
 
-        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"), "", RES_PARAMS);
+        String hashCipher = generateHashCipher(hashPlain, notiCADto.getMchtTrdNo());
+
+        return responseMessage(hashCipher, RES_PARAMS);
     }
 
-    private void resParams(Map<String, String> resParams, NotiCADto notiCADto) {
-        resParams.put("outStatCd", notiCADto.getOutStatCd());
-        resParams.put("trdNo", notiCADto.getTrdNo());
-        resParams.put("method", notiCADto.getMethod());
-        resParams.put("bizType", notiCADto.getBizType());
-        resParams.put("mchtId", notiCADto.getMchtId());
-        resParams.put("mchtTrdNo", notiCADto.getMchtTrdNo());
-        resParams.put("trdAmt", notiCADto.getTrdAmt());
-        resParams.put("pktHash", notiCADto.getPktHash());
-    }
-
-    private String createHashPlainText(String mchtTrdNo, String trdAmt, String outStatCd, String mchtId, String trdDtm) {
-        return mchtTrdNo + trdAmt + outStatCd + mchtId + trdDtm + constant.LICENSE_KEY;
+    private String createHashPlainText(String outStatCd, String trdDtm, String mchtId, String mchtTrdNo, String trdAmt) {
+        return outStatCd + trdDtm + mchtId + mchtTrdNo + trdAmt;
     }
 
     private String generateHashCipher(String hashPlain, String mchtTrdNo) {
@@ -74,13 +69,54 @@ public class HectoFinancialAdapter {
         return hashCipher;
     }
 
+
     public String notiVAData(NotiVADto notiVADto) {
-        return null;
+        Map<String, String> RES_PARAMS = new LinkedHashMap<>();
+        resParamsVA(RES_PARAMS, notiVADto);
+        String hashPlain = createHashPlainText(
+                notiVADto.getOutStatCd(),
+                notiVADto.getTrdDtm(),
+                notiVADto.getMchtId(),
+                notiVADto.getMchtTrdNo(),
+                notiVADto.getTrdAmt()) + constant.LICENSE_KEY;
+        String hashCipher = generateHashCipher(hashPlain, notiVADto.getMchtTrdNo());
+
+        return responseMessage(hashCipher, RES_PARAMS);
     }
 
-    private boolean checkPktHash(String hashCipher, String pktHash) {
-        return hashCipher.equals(pktHash);
+    private void resParamsCA(Map<String, String> resParams, NotiCADto notiCADto) {
+        resParams.put("outStatCd", notiCADto.getOutStatCd());
+        resParams.put("trdNo", notiCADto.getTrdNo());
+        resParams.put("method", notiCADto.getMethod());
+        resParams.put("bizType", notiCADto.getBizType());
+        resParams.put("mchtId", notiCADto.getMchtId());
+        resParams.put("mchtTrdNo", notiCADto.getMchtTrdNo());
+        resParams.put("trdAmt", notiCADto.getTrdAmt());
+        resParams.put("trdDtm", notiCADto.getTrdDtm());
+        resParams.put("mchtParam", notiCADto.getMchtParam());
+
+        resParams.put("billKey", notiCADto.getBillKey());
+        resParams.put("billKeyExpireDt", notiCADto.getBillKeyExpireDt());
+        resParams.put("pktHash", notiCADto.getPktHash());
     }
+
+    private void resParamsVA(Map<String, String> resParams, NotiVADto notiVADto) {
+        resParams.put("bizType", notiVADto.getBizType());
+        resParams.put("mchtTrdNo", notiVADto.getMchtTrdNo());
+        resParams.put("method", notiVADto.getMethod());
+        resParams.put("trdAmt", notiVADto.getTrdAmt());
+        resParams.put("mchtParam", notiVADto.getMchtParam());
+        resParams.put("vAcntNo", notiVADto.getVAcntNo());
+        resParams.put("trdNo", notiVADto.getTrdNo());
+        resParams.put("trdDtm", notiVADto.getTrdDtm());
+        resParams.put("expireDt", notiVADto.getExpireDt());
+        resParams.put("pktHash", notiVADto.getPktHash());
+        resParams.put("outStatCd", notiVADto.getOutStatCd());
+        resParams.put("mchtId", notiVADto.getMchtId());
+        resParams.put("AcntPrintNm", notiVADto.getAcntPrintNm());
+        resParams.put("bankNm", notiVADto.getBankNm());
+    }
+
 
     private Map<String, String> parseParams(String[] pairs) {
         Map<String, String> parsedParams = new HashMap<>();
@@ -93,16 +129,17 @@ public class HectoFinancialAdapter {
         return parsedParams;
     }
 
-    private boolean isFirstRequest(String bizType) {
-//        return isEmptyPayment() && (bizType.equals("B2") || bizType.equals("B0"));
-        return true;
-    }
-
-    private String responseMessage(String hashCipher, String mchtTrdNo, String pktHash, String outStatCd, String mchtParam, Map<String, String> responseParam) {
-        if (!checkPktHash(hashCipher, pktHash)) {
+    private String responseMessage(String hashCipher, Map<String, String> responseParam) {
+        String mchtTrdNo = responseParam.get("mchtTrdNo");
+        String pktHash = responseParam.get("pktHash");
+        if (!hashCipher.equals(pktHash)) {
             logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
             throw new InvalidParameterException();
         }
+
+        String outStatCd = responseParam.get("outStatCd");
+        String mchtParam = responseParam.get("mchtParam");
+        String method = responseParam.get("method");
 
         Map<String, String> parseParams = parseParams(mchtParam.split("&"));
         String agencyId = parseParams.get("agencyId");
@@ -113,49 +150,66 @@ public class HectoFinancialAdapter {
         String offer = parseParams.get("offer");
 
         boolean resp = false;
-        if (SUCCESS.equals(outStatCd)) {
-            String method = responseParam.get("method");
-            LocalDateTime parsedDate = LocalDateTime.parse(responseParam.get("trdDtm"), TRADE_DATE_FORMATTER);
-            Date trDate = Date.from(parsedDate.atZone(ZoneId.systemDefault()).toInstant());
-            Date startDate = Date.from(parsedStartDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date endDate = Date.from(parsedEndDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDateTime parsedDate = LocalDateTime.parse(responseParam.get("trdDtm"), TRADE_DATE_FORMATTER);
+        LocalDate trDate = LocalDate.from(parsedDate.atZone(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.from(parsedStartDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate endDate = LocalDate.from(parsedEndDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            if ("CA".equals(method)) {
-                resp = handleCA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
-            } else if ("VA".equals(method)) {
-                resp = handleVA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
-            } else {
-                throw new InvalidParameterException("Invalid method (CA, VA) : " + method);
+        if (SUCCESS.equals(outStatCd)) {
+            switch (method) {
+                case "CA":
+                    resp = sendCAPayment(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
+                    // 제휴사 Noti
+                    // 관리도구 Noti
+                    break;
+                case "VA":
+                    resp = sendVAPayment(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
+                    // 제휴사 Noti
+                    // 관리도구 Noti
+                    break;
+                default:
+                    throw new InvalidParameterException("Invalid method (CA, VA) : " + method);
             }
         } else if (PENDING_PAYMENT.equals(outStatCd)) {
-            // Handle pending payment status if needed
+            resp = sendVAPendingPayment(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
+            // 제휴사 Noti
+            // 관리도구 Noti
         }
 
-        if (resp) {
-            logger.info("[" + mchtTrdNo + "][Result] OK");
-            return "OK";
-        } else {
-            logger.info("[" + mchtTrdNo + "][Result] FAIL");
-            return "FAIL";
-        }
+        logger.info("[" + mchtTrdNo + "][Result] " + (resp ? "OK" : "FAIL"));
+        return resp ? "OK" : "FAIL";
     }
 
-    private boolean handleCA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate) {
-        if (isFirstRequest(responseParam.get("bizType"))) {
+
+    private boolean sendCAPayment(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate) {
+        if (hectoFinancialServicePort.isCurrentPayment(responseParam.get("trdNo")) && ("B2".equals(responseParam.get("bizType")) || "B0".equals(responseParam.get("bizType")))) {
             String billKey = responseParam.get("billKey");
-            hectoFinancialServicePort.processPaymentCA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate, billKey);
+            String billKeyExpireDt = responseParam.get("billKeyExpireDt");
+
+            hectoFinancialServicePort.processPaymentCA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate, billKey, billKeyExpireDt);
             return true;
         }
+        logger.info("already registered payment {}", responseParam.get("trdNo"));
         return false;
     }
 
-    private boolean handleVA(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date trDate, Date startDate, Date endDate) {
-        if (isFirstRequest(responseParam.get("bizType"))) {
-            LocalDateTime parsedVBankExpireDate = LocalDateTime.parse(responseParam.get("expireDt"), TRADE_DATE_FORMATTER);
-            Date vBankExpireDate = Date.from(parsedVBankExpireDate.atZone(ZoneId.systemDefault()).toInstant());
-            hectoFinancialServicePort.processPaymentVA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate, vBankExpireDate);
+    private boolean sendVAPayment(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate) {
+        if (!hectoFinancialServicePort.isCurrentPayment(responseParam.get("trdNo"))) {
+            hectoFinancialServicePort.processPaymentVA(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate);
             return true;
         }
+        logger.info("already registered payment {}", responseParam.get("trdNo"));
+        return false;
+    }
+
+    private boolean sendVAPendingPayment(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, LocalDate trDate, LocalDate startDate, LocalDate endDate) {
+        if (hectoFinancialServicePort.isCurrentPayment(responseParam.get("trdNo"))) {
+            LocalDateTime parsedVBankExpireDate = LocalDateTime.parse(responseParam.get("expireDt"), TRADE_DATE_FORMATTER);
+            LocalDate vBankExpireDate = LocalDate.from(parsedVBankExpireDate.atZone(ZoneId.systemDefault()).toInstant());
+            hectoFinancialServicePort.processPaymentVAPending(responseParam, agencyId, siteId, rateSel, offer, trDate, startDate, endDate, vBankExpireDate);
+            return true;
+        }
+        logger.info("already registered payment {}", responseParam.get("trdNo"));
         return false;
     }
 
